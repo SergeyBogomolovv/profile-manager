@@ -1,3 +1,3 @@
-module github.com/SergeyBogomolovv/profile-management/notification
+module github.com/SergeyBogomolovv/profile-manager/notification
 
 go 1.24.0
