@@ -1,0 +1,14 @@
+grpc:
+  port: 50051
+
+http:
+  port: 8080
+
+database:
+  host: localhost
+  port: 5432
+  user: postgres
+  dbname: sso
+
+oauth:
+  redirect_url: http://localhost:8080/auth/google/callback
