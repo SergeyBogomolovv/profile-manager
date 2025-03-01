@@ -7,7 +7,7 @@ import (
 
 	"github.com/SergeyBogomolovv/profile-manager/common/httpx"
 	"github.com/SergeyBogomolovv/profile-manager/sso/internal/config"
-	"github.com/SergeyBogomolovv/profile-manager/sso/internal/models"
+	"github.com/SergeyBogomolovv/profile-manager/sso/internal/domain"
 	"github.com/go-chi/chi/v5"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -16,7 +16,7 @@ import (
 const userInfoUrl = "https://www.googleapis.com/oauth2/v2/userinfo"
 
 type OAuthService interface {
-	GoogleSignIn(ctx context.Context, user models.OAuthUserInfo) (models.Tokens, error)
+	GoogleSignIn(ctx context.Context, user domain.OAuthUserInfo) (domain.Tokens, error)
 }
 
 type oauthController struct {
@@ -76,7 +76,7 @@ func (c *oauthController) HandleCallback(w http.ResponseWriter, r *http.Request)
 	}
 	defer resp.Body.Close()
 
-	var user models.OAuthUserInfo
+	var user domain.OAuthUserInfo
 	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
 		httpx.WriteError(w, "Failed to decode user info", http.StatusInternalServerError)
 		return
