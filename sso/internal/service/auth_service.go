@@ -31,7 +31,7 @@ type authService struct {
 }
 
 func NewAuthService(txManager transaction.TxManager, users UserRepo, tokens TokenRepo, jwtSecret []byte) *authService {
-	return &authService{users: users, tokens: tokens, txManager: txManager}
+	return &authService{users: users, tokens: tokens, txManager: txManager, jwtSecret: jwtSecret}
 }
 
 func (s *authService) Register(ctx context.Context, email, password string) error {
@@ -88,17 +88,7 @@ func (s *authService) Login(ctx context.Context, email, password string) (domain
 		return domain.Tokens{}, domain.ErrInvalidCredentials
 	}
 
-	// Create tokens
-	refreshToken, err := s.tokens.Create(ctx, user.ID)
-	if err != nil {
-		return domain.Tokens{}, fmt.Errorf("failed to create refresh token: %w", err)
-	}
-	accessToken, err := signJwt(user.ID.String(), s.jwtSecret)
-	if err != nil {
-		return domain.Tokens{}, fmt.Errorf("failed to sign access token: %w", err)
-	}
-
-	return domain.Tokens{AccessToken: accessToken, RefreshToken: refreshToken}, nil
+	return s.createTokens(ctx, user.ID)
 }
 
 func (s *authService) Refresh(ctx context.Context, refreshToken string) (string, error) {

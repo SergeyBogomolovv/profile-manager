@@ -36,7 +36,7 @@ func main() {
 
 	logger := newLogger()
 	grpcController := controller.NewGRPCController(logger, authSvc)
-	oauthController := controller.NewOAuthController(conf.OAuth, nil)
+	oauthController := controller.NewOAuthController(logger, conf.OAuth, authSvc)
 
 	app := app.New(logger, conf, oauthController, grpcController)
 

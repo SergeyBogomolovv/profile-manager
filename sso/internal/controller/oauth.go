@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/SergeyBogomolovv/profile-manager/common/httpx"
@@ -20,12 +21,13 @@ type OAuthService interface {
 }
 
 type oauthController struct {
-	state string
-	oauth *oauth2.Config
-	svc   OAuthService
+	logger *slog.Logger
+	state  string
+	oauth  *oauth2.Config
+	svc    OAuthService
 }
 
-func NewOAuthController(conf config.OAuth, svc OAuthService) *oauthController {
+func NewOAuthController(logger *slog.Logger, conf config.OAuth, svc OAuthService) *oauthController {
 	oauth := &oauth2.Config{
 		ClientID:     conf.ClientID,
 		ClientSecret: conf.ClientSecret,
@@ -36,7 +38,7 @@ func NewOAuthController(conf config.OAuth, svc OAuthService) *oauthController {
 		},
 		Endpoint: google.Endpoint,
 	}
-	return &oauthController{svc: svc, oauth: oauth, state: "23490rfdslmfjn34i0skldfj"}
+	return &oauthController{svc: svc, oauth: oauth, state: "23490rfdslmfjn34i0skldfj", logger: logger}
 }
 
 // Инициализация роутов
@@ -84,6 +86,7 @@ func (c *oauthController) HandleCallback(w http.ResponseWriter, r *http.Request)
 
 	tokens, err := c.svc.GoogleSignIn(r.Context(), user)
 	if err != nil {
+		c.logger.Error("Failed to sign in", "err", err)
 		httpx.WriteError(w, "Failed to sign in", http.StatusInternalServerError)
 		return
 	}
