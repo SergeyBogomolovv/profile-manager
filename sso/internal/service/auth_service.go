@@ -33,38 +33,31 @@ func NewAuthService(txManager transaction.TxManager, users UserRepo, tokens Toke
 }
 
 func (s *authService) Register(ctx context.Context, email, password string) error {
-	// Inject and begin tx
-	ctx, tx, err := s.txManager.BeginTx(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
-	}
-	defer tx.Rollback()
-
-	// Checks if user exists
-	_, err = s.users.GetByEmail(ctx, email)
-	if err == nil {
-		return fmt.Errorf("user with email %s already exists", email)
-	}
-	if !errors.Is(err, domain.ErrUserNotFound) {
-		return fmt.Errorf("failed to check user exists: %w", err)
-	}
-
-	// Hash password
-	hashedPassword, err := hashPassword(password)
-	if err != nil {
-		return fmt.Errorf("failed to hash password: %w", err)
-	}
-	// Create user
-	user, err := s.users.Create(ctx, email)
-	if err != nil {
-		return fmt.Errorf("failed to create user: %w", err)
-	}
-	// Create credentials account type
-	if err := s.users.AddAccount(ctx, user.ID, domain.AccountTypeCredentials, hashedPassword); err != nil {
-		return fmt.Errorf("failed to add account: %w", err)
-	}
-
-	return tx.Commit()
+	return s.txManager.Run(ctx, func(ctx context.Context) error {
+		// Checks if user exists
+		_, err := s.users.GetByEmail(ctx, email)
+		if err == nil {
+			return fmt.Errorf("user with email %s already exists", email)
+		}
+		if !errors.Is(err, domain.ErrUserNotFound) {
+			return fmt.Errorf("failed to check user exists: %w", err)
+		}
+		// Hash password
+		hashedPassword, err := hashPassword(password)
+		if err != nil {
+			return fmt.Errorf("failed to hash password: %w", err)
+		}
+		// Create user
+		user, err := s.users.Create(ctx, email)
+		if err != nil {
+			return fmt.Errorf("failed to create user: %w", err)
+		}
+		// Create credentials account type
+		if err := s.users.AddAccount(ctx, user.ID, domain.AccountTypeCredentials, hashedPassword); err != nil {
+			return fmt.Errorf("failed to add account: %w", err)
+		}
+		return nil
+	})
 }
 
 func (s *authService) Login(ctx context.Context, email, password string) (domain.Tokens, error) {

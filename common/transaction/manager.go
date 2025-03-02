@@ -31,6 +31,7 @@ type transactionManager struct {
 
 type TxManager interface {
 	BeginTx(ctx context.Context) (context.Context, Transaction, error)
+	Run(ctx context.Context, callback func(ctx context.Context) error) (err error)
 }
 
 func NewTxManager(db *sqlx.DB) TxManager {
@@ -44,4 +45,18 @@ func (t *transactionManager) BeginTx(ctx context.Context) (context.Context, Tran
 		return nil, nil, err
 	}
 	return withTx(ctx, tx), tx, nil
+}
+
+// Run executes a callback inside a transaction
+func (t *transactionManager) Run(ctx context.Context, callback func(ctx context.Context) error) (err error) {
+	ctx, tx, err := t.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if err := callback(ctx); err != nil {
+		return err
+	}
+	return tx.Commit()
 }
