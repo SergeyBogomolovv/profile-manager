@@ -37,23 +37,32 @@ func NewAuthService(txManager transaction.TxManager, users UserRepo, tokens Toke
 func (s *authService) Register(ctx context.Context, email, password string) error {
 	return s.txManager.Run(ctx, func(ctx context.Context) error {
 		// Checks if user exists
-		_, err := s.users.GetByEmail(ctx, email)
+		user, err := s.users.GetByEmail(ctx, email)
+		if errors.Is(err, domain.ErrUserNotFound) {
+			// Create user if not exists
+			user, err = s.users.Create(ctx, email)
+			if err != nil {
+				return fmt.Errorf("failed to create user: %w", err)
+			}
+		} else if err != nil {
+			return fmt.Errorf("failed to get user: %w", err)
+		}
+
+		// Checks if credentials account type not exists
+		_, err = s.users.AccountByID(ctx, user.ID, domain.AccountTypeCredentials)
 		if err == nil {
 			return domain.ErrUserAlreadyExists
 		}
-		if !errors.Is(err, domain.ErrUserNotFound) {
-			return fmt.Errorf("failed to check user exists: %w", err)
+		if !errors.Is(err, domain.ErrAccountNotFound) {
+			return fmt.Errorf("failed to get account: %w", err)
 		}
+
 		// Hash password
 		hashedPassword, err := hashPassword(password)
 		if err != nil {
 			return fmt.Errorf("failed to hash password: %w", err)
 		}
-		// Create user
-		user, err := s.users.Create(ctx, email)
-		if err != nil {
-			return fmt.Errorf("failed to create user: %w", err)
-		}
+
 		// Create credentials account type
 		if err := s.users.AddAccount(ctx, user.ID, domain.AccountTypeCredentials, hashedPassword); err != nil {
 			return fmt.Errorf("failed to add account: %w", err)
