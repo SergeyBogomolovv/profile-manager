@@ -81,6 +81,63 @@ func (_c *AuthService_Login_Call) RunAndReturn(run func(context.Context, string,
 	return _c
 }
 
+// Refresh provides a mock function with given fields: ctx, refreshToken
+func (_m *AuthService) Refresh(ctx context.Context, refreshToken string) (string, error) {
+	ret := _m.Called(ctx, refreshToken)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Refresh")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (string, error)); ok {
+		return rf(ctx, refreshToken)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) string); ok {
+		r0 = rf(ctx, refreshToken)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, refreshToken)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AuthService_Refresh_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Refresh'
+type AuthService_Refresh_Call struct {
+	*mock.Call
+}
+
+// Refresh is a helper method to define mock.On call
+//   - ctx context.Context
+//   - refreshToken string
+func (_e *AuthService_Expecter) Refresh(ctx interface{}, refreshToken interface{}) *AuthService_Refresh_Call {
+	return &AuthService_Refresh_Call{Call: _e.mock.On("Refresh", ctx, refreshToken)}
+}
+
+func (_c *AuthService_Refresh_Call) Run(run func(ctx context.Context, refreshToken string)) *AuthService_Refresh_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *AuthService_Refresh_Call) Return(_a0 string, _a1 error) *AuthService_Refresh_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AuthService_Refresh_Call) RunAndReturn(run func(context.Context, string) (string, error)) *AuthService_Refresh_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Register provides a mock function with given fields: ctx, email, password
 func (_m *AuthService) Register(ctx context.Context, email string, password string) error {
 	ret := _m.Called(ctx, email, password)

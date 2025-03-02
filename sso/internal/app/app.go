@@ -37,10 +37,11 @@ func New(logger *slog.Logger, conf *config.Config, oauthController OAuthControll
 		Addr:    fmt.Sprintf(":%d", conf.HTTP.Port),
 		Handler: router,
 	}
-
 	grpcSrv := grpc.NewServer()
+
 	gRPCController.Init(grpcSrv)
 	oauthController.Init(router)
+
 	return &app{httpSrv: httpSrv, grpcSrv: grpcSrv, logger: logger, conf: conf}
 }
 

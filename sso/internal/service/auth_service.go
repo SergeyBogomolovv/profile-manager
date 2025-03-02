@@ -20,6 +20,7 @@ type UserRepo interface {
 
 type TokenRepo interface {
 	Create(ctx context.Context, userID uuid.UUID) (string, error)
+	UserID(ctx context.Context, token string) (uuid.UUID, error)
 }
 
 type authService struct {
@@ -57,6 +58,8 @@ func (s *authService) Register(ctx context.Context, email, password string) erro
 		if err := s.users.AddAccount(ctx, user.ID, domain.AccountTypeCredentials, hashedPassword); err != nil {
 			return fmt.Errorf("failed to add account: %w", err)
 		}
+
+		// TODO: send data to rabbitmq
 		return nil
 	})
 }
@@ -96,6 +99,21 @@ func (s *authService) Login(ctx context.Context, email, password string) (domain
 	}
 
 	return domain.Tokens{AccessToken: accessToken, RefreshToken: refreshToken}, nil
+}
+
+func (s *authService) Refresh(ctx context.Context, refreshToken string) (string, error) {
+	userID, err := s.tokens.UserID(ctx, refreshToken)
+	if err != nil {
+		if errors.Is(err, domain.ErrInvalidToken) {
+			return "", domain.ErrInvalidToken
+		}
+		return "", fmt.Errorf("failed to get user id: %w", err)
+	}
+	accessToken, err := signJwt(userID.String(), s.jwtSecret)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign access token: %w", err)
+	}
+	return accessToken, nil
 }
 
 func hashPassword(password string) ([]byte, error) {

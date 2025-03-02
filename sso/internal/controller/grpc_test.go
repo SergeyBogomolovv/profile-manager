@@ -88,7 +88,7 @@ func TestGRPCController_Login(t *testing.T) {
 		name         string
 		args         args
 		mockBehavior MockBehavior
-		want         *pb.TokenResponse
+		want         *pb.TokensResponse
 		wantErr      bool
 	}{
 		{
@@ -97,7 +97,7 @@ func TestGRPCController_Login(t *testing.T) {
 			mockBehavior: func(svc *mocks.AuthService, req *pb.LoginRequest) {
 				svc.EXPECT().Login(mock.Anything, req.Email, req.Password).Return(domain.Tokens{AccessToken: "access_token", RefreshToken: "refresh_token"}, nil).Once()
 			},
-			want:    &pb.TokenResponse{AccessToken: "access_token", RefreshToken: "refresh_token"},
+			want:    &pb.TokensResponse{AccessToken: "access_token", RefreshToken: "refresh_token"},
 			wantErr: false,
 		},
 		{
@@ -123,6 +123,54 @@ func TestGRPCController_Login(t *testing.T) {
 			controller := controller.NewGRPCController(testutils.NewTestLogger(), svc)
 			tc.mockBehavior(svc, tc.args.req)
 			got, err := controller.Login(context.Background(), tc.args.req)
+			if tc.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
+func TestGRPCController_Refresh(t *testing.T) {
+	type args struct {
+		req *pb.RefreshRequest
+	}
+
+	type MockBehavior func(svc *mocks.AuthService, req *pb.RefreshRequest)
+
+	testCases := []struct {
+		name         string
+		args         args
+		mockBehavior MockBehavior
+		want         *pb.AccessTokenResponse
+		wantErr      bool
+	}{
+		{
+			name: "success",
+			args: args{req: &pb.RefreshRequest{RefreshToken: "refresh_token"}},
+			mockBehavior: func(svc *mocks.AuthService, req *pb.RefreshRequest) {
+				svc.EXPECT().Refresh(mock.Anything, req.RefreshToken).Return("access_token", nil).Once()
+			},
+			want:    &pb.AccessTokenResponse{AccessToken: "access_token"},
+			wantErr: false,
+		},
+		{
+			name: "invalid token",
+			mockBehavior: func(svc *mocks.AuthService, req *pb.RefreshRequest) {
+				svc.EXPECT().Refresh(mock.Anything, req.RefreshToken).Return("", domain.ErrInvalidToken).Once()
+			},
+			args:    args{req: &pb.RefreshRequest{RefreshToken: "invalid_token"}},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			svc := mocks.NewAuthService(t)
+			controller := controller.NewGRPCController(testutils.NewTestLogger(), svc)
+			tc.mockBehavior(svc, tc.args.req)
+			got, err := controller.Refresh(context.Background(), tc.args.req)
 			if tc.wantErr {
 				assert.Error(t, err)
 				return

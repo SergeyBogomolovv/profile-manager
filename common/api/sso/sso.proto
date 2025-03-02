@@ -5,9 +5,9 @@ option go_package = "api/sso";
 package sso;
 
 service SSO {
-  rpc Login(LoginRequest) returns (TokenResponse);
+  rpc Login(LoginRequest) returns (TokensResponse);
   rpc Register(RegisterRequest) returns (RegisterResponse);
-  rpc RefreshToken(RefreshTokenRequest) returns (TokenResponse);
+  rpc Refresh(RefreshRequest) returns (AccessTokenResponse);
 }
 
 message LoginRequest {
@@ -24,11 +24,15 @@ message RegisterResponse {
   string message = 1;
 }
 
-message TokenResponse {
+message TokensResponse {
   string access_token = 1;
   string refresh_token = 2;
 }
 
-message RefreshTokenRequest {
+message AccessTokenResponse {
+  string access_token = 1;
+}
+
+message RefreshRequest {
   string refresh_token = 1;
 }

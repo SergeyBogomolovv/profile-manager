@@ -5,11 +5,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type TokenClaims struct {
-	Username string `json:"username"`
-	jwt.RegisteredClaims
-}
-
 func signJwt(userID string, secretKey []byte) (string, error) {
 	claims := domain.NewTokenClaims(userID)
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(secretKey)

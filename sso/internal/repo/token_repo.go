@@ -37,6 +37,7 @@ func (r *tokensRepo) Create(ctx context.Context, userID uuid.UUID) (string, erro
 	return token, nil
 }
 
+// Gets user id from refresh token, if token is not exists, returns domain.ErrInvalidToken
 func (r *tokensRepo) UserID(ctx context.Context, token string) (uuid.UUID, error) {
 	data, err := r.db.Get(ctx, token).Bytes()
 	if err != nil {

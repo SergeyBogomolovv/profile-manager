@@ -19,18 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SSO_Login_FullMethodName        = "/sso.SSO/Login"
-	SSO_Register_FullMethodName     = "/sso.SSO/Register"
-	SSO_RefreshToken_FullMethodName = "/sso.SSO/RefreshToken"
+	SSO_Login_FullMethodName    = "/sso.SSO/Login"
+	SSO_Register_FullMethodName = "/sso.SSO/Register"
+	SSO_Refresh_FullMethodName  = "/sso.SSO/Refresh"
 )
 
 // SSOClient is the client API for SSO service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SSOClient interface {
-	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*TokenResponse, error)
+	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*TokensResponse, error)
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
-	RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*TokenResponse, error)
+	Refresh(ctx context.Context, in *RefreshRequest, opts ...grpc.CallOption) (*AccessTokenResponse, error)
 }
 
 type sSOClient struct {
@@ -41,9 +41,9 @@ func NewSSOClient(cc grpc.ClientConnInterface) SSOClient {
 	return &sSOClient{cc}
 }
 
-func (c *sSOClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*TokenResponse, error) {
+func (c *sSOClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*TokensResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(TokenResponse)
+	out := new(TokensResponse)
 	err := c.cc.Invoke(ctx, SSO_Login_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -61,10 +61,10 @@ func (c *sSOClient) Register(ctx context.Context, in *RegisterRequest, opts ...g
 	return out, nil
 }
 
-func (c *sSOClient) RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*TokenResponse, error) {
+func (c *sSOClient) Refresh(ctx context.Context, in *RefreshRequest, opts ...grpc.CallOption) (*AccessTokenResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(TokenResponse)
-	err := c.cc.Invoke(ctx, SSO_RefreshToken_FullMethodName, in, out, cOpts...)
+	out := new(AccessTokenResponse)
+	err := c.cc.Invoke(ctx, SSO_Refresh_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -75,9 +75,9 @@ func (c *sSOClient) RefreshToken(ctx context.Context, in *RefreshTokenRequest, o
 // All implementations must embed UnimplementedSSOServer
 // for forward compatibility.
 type SSOServer interface {
-	Login(context.Context, *LoginRequest) (*TokenResponse, error)
+	Login(context.Context, *LoginRequest) (*TokensResponse, error)
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
-	RefreshToken(context.Context, *RefreshTokenRequest) (*TokenResponse, error)
+	Refresh(context.Context, *RefreshRequest) (*AccessTokenResponse, error)
 	mustEmbedUnimplementedSSOServer()
 }
 
@@ -88,14 +88,14 @@ type SSOServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSSOServer struct{}
 
-func (UnimplementedSSOServer) Login(context.Context, *LoginRequest) (*TokenResponse, error) {
+func (UnimplementedSSOServer) Login(context.Context, *LoginRequest) (*TokensResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
 func (UnimplementedSSOServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
-func (UnimplementedSSOServer) RefreshToken(context.Context, *RefreshTokenRequest) (*TokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RefreshToken not implemented")
+func (UnimplementedSSOServer) Refresh(context.Context, *RefreshRequest) (*AccessTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Refresh not implemented")
 }
 func (UnimplementedSSOServer) mustEmbedUnimplementedSSOServer() {}
 func (UnimplementedSSOServer) testEmbeddedByValue()             {}
@@ -154,20 +154,20 @@ func _SSO_Register_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SSO_RefreshToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RefreshTokenRequest)
+func _SSO_Refresh_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RefreshRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SSOServer).RefreshToken(ctx, in)
+		return srv.(SSOServer).Refresh(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: SSO_RefreshToken_FullMethodName,
+		FullMethod: SSO_Refresh_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SSOServer).RefreshToken(ctx, req.(*RefreshTokenRequest))
+		return srv.(SSOServer).Refresh(ctx, req.(*RefreshRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -188,8 +188,8 @@ var SSO_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SSO_Register_Handler,
 		},
 		{
-			MethodName: "RefreshToken",
-			Handler:    _SSO_RefreshToken_Handler,
+			MethodName: "Refresh",
+			Handler:    _SSO_Refresh_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
