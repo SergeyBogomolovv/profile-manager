@@ -18,3 +18,8 @@ type Account struct {
 	Provider domain.AccountType `db:"provider"`
 	Password []byte             `db:"password"`
 }
+
+type RefreshToken struct {
+	UserID    uuid.UUID `json:"user_id"`
+	ExpiresAt time.Time `json:"expires_at"`
+}

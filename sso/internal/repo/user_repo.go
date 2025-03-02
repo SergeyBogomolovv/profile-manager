@@ -17,7 +17,7 @@ type userRepo struct {
 	qb sq.StatementBuilderType
 }
 
-func New(db *sqlx.DB) *userRepo {
+func NewUserRepo(db *sqlx.DB) *userRepo {
 	qb := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	return &userRepo{
 		db: db,

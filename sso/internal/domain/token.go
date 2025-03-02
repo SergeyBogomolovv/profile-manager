@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -16,7 +17,12 @@ type TokenClaims struct {
 	jwt.RegisteredClaims
 }
 
-const tokenDuration = time.Hour
+var (
+	ErrInvalidToken = errors.New("invalid token")
+)
+
+const AccessTokenTTL = time.Hour
+const RefreshTokenTTL = time.Hour * 24 * 7
 
 func NewTokenClaims(userID string) TokenClaims {
 	return TokenClaims{
@@ -24,7 +30,7 @@ func NewTokenClaims(userID string) TokenClaims {
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "sso",
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(tokenDuration)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(AccessTokenTTL)),
 		},
 	}
 }
