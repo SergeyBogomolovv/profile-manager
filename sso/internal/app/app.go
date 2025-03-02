@@ -19,20 +19,18 @@ type app struct {
 	logger  *slog.Logger
 	grpcSrv *grpc.Server
 	httpSrv *http.Server
-	conf    config.Config
+	conf    *config.Config
 }
 
 type OAuthController interface {
 	Init(router *chi.Mux)
 }
 
-type GRPCContoller interface {
+type GRPCController interface {
 	Init(srv *grpc.Server)
 }
 
-type GRPCController interface{}
-
-func New(logger *slog.Logger, conf *config.Config, oauthController OAuthController, gRPCController GRPCContoller) *app {
+func New(logger *slog.Logger, conf *config.Config, oauthController OAuthController, gRPCController GRPCController) *app {
 	router := chi.NewRouter()
 	httpSrv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", conf.HTTP.Port),
@@ -41,12 +39,12 @@ func New(logger *slog.Logger, conf *config.Config, oauthController OAuthControll
 	grpcSrv := grpc.NewServer()
 	gRPCController.Init(grpcSrv)
 	oauthController.Init(router)
-	return &app{httpSrv: httpSrv, grpcSrv: grpcSrv, logger: logger}
+	return &app{httpSrv: httpSrv, grpcSrv: grpcSrv, logger: logger, conf: conf}
 }
 
 func (a *app) Start() {
 	go func() {
-		a.logger.Info("starting http server")
+		a.logger.Info("starting http server", "port", a.conf.HTTP.Port)
 		if err := a.httpSrv.ListenAndServe(); err != nil && errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("failed to run http server %v", err)
 		}
@@ -57,6 +55,7 @@ func (a *app) Start() {
 		if err != nil {
 			log.Fatalf("failed to listen: %v", err)
 		}
+		a.logger.Info("starting grpc server", "port", a.conf.GRPC.Port)
 		a.grpcSrv.Serve(lis)
 	}()
 }

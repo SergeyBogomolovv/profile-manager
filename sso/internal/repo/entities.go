@@ -13,10 +13,25 @@ type User struct {
 	RegisteredAt time.Time `db:"registered_at"`
 }
 
+func (u User) ToDomain() domain.User {
+	return domain.User{
+		ID:    u.ID,
+		Email: u.Email,
+	}
+}
+
 type Account struct {
 	UserID   uuid.UUID          `db:"user_id"`
 	Provider domain.AccountType `db:"provider"`
 	Password []byte             `db:"password"`
+}
+
+func (a Account) ToDomain() domain.Account {
+	return domain.Account{
+		UserID:   a.UserID,
+		Provider: a.Provider,
+		Password: a.Password,
+	}
 }
 
 type RefreshToken struct {

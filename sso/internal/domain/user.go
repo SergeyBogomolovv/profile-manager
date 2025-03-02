@@ -13,12 +13,12 @@ type OAuthUserInfo struct {
 }
 
 type User struct {
-	ID       uuid.UUID `json:"id"`
-	Email    string    `json:"email"`
-	Password []byte    `json:"password"`
+	ID    uuid.UUID `json:"id"`
+	Email string    `json:"email"`
 }
 
 var (
 	ErrUserNotFound       = errors.New("user not found")
 	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrUserAlreadyExists  = errors.New("user already exists")
 )

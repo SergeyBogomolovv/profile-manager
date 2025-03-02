@@ -15,6 +15,7 @@ type UserRepo interface {
 	GetByEmail(ctx context.Context, email string) (domain.User, error)
 	Create(ctx context.Context, email string) (domain.User, error)
 	AddAccount(ctx context.Context, userID uuid.UUID, provider domain.AccountType, password []byte) error
+	AccountByID(ctx context.Context, userID uuid.UUID, provider domain.AccountType) (domain.Account, error)
 }
 
 type TokenRepo interface {
@@ -37,7 +38,7 @@ func (s *authService) Register(ctx context.Context, email, password string) erro
 		// Checks if user exists
 		_, err := s.users.GetByEmail(ctx, email)
 		if err == nil {
-			return fmt.Errorf("user with email %s already exists", email)
+			return domain.ErrUserAlreadyExists
 		}
 		if !errors.Is(err, domain.ErrUserNotFound) {
 			return fmt.Errorf("failed to check user exists: %w", err)
@@ -70,8 +71,17 @@ func (s *authService) Login(ctx context.Context, email, password string) (domain
 		return domain.Tokens{}, fmt.Errorf("failed to get user: %w", err)
 	}
 
+	// Get account
+	account, err := s.users.AccountByID(ctx, user.ID, domain.AccountTypeCredentials)
+	if err != nil {
+		if errors.Is(err, domain.ErrAccountNotFound) {
+			return domain.Tokens{}, domain.ErrInvalidCredentials
+		}
+		return domain.Tokens{}, fmt.Errorf("failed to get account: %w", err)
+	}
+
 	// Compare password
-	if err := comparePassword(password, user.Password); err != nil {
+	if err := comparePassword(password, account.Password); err != nil {
 		return domain.Tokens{}, domain.ErrInvalidCredentials
 	}
 

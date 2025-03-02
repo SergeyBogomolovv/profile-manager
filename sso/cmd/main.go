@@ -9,9 +9,14 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/SergeyBogomolovv/profile-manager/common/postgres"
+	"github.com/SergeyBogomolovv/profile-manager/common/redis"
+	"github.com/SergeyBogomolovv/profile-manager/common/transaction"
 	"github.com/SergeyBogomolovv/profile-manager/sso/internal/app"
 	"github.com/SergeyBogomolovv/profile-manager/sso/internal/config"
 	"github.com/SergeyBogomolovv/profile-manager/sso/internal/controller"
+	"github.com/SergeyBogomolovv/profile-manager/sso/internal/repo"
+	"github.com/SergeyBogomolovv/profile-manager/sso/internal/service"
 	"github.com/joho/godotenv"
 )
 
@@ -20,8 +25,17 @@ func main() {
 	flag.Parse()
 	conf := config.MustLoadConfig(*confPath)
 
+	redis := redis.MustNew(conf.RedisURL)
+	postgres := postgres.MustNew(conf.PostgresURL)
+
+	userRepo := repo.NewUserRepo(postgres)
+	tokenRepo := repo.NewTokensRepo(redis)
+	txManager := transaction.NewTxManager(postgres)
+
+	authSvc := service.NewAuthService(txManager, userRepo, tokenRepo, []byte(conf.JWT.SecretKey))
+
 	logger := newLogger()
-	grpcController := controller.NewGRPCController(nil)
+	grpcController := controller.NewGRPCController(logger, authSvc)
 	oauthController := controller.NewOAuthController(conf.OAuth, nil)
 
 	app := app.New(logger, conf, oauthController, grpcController)
@@ -35,6 +49,8 @@ func main() {
 		defer wg.Done()
 		<-ctx.Done()
 		app.Stop()
+		redis.Close()
+		postgres.Close()
 	}()
 
 	app.Start()

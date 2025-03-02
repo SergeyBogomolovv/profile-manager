@@ -6,12 +6,22 @@ package sso;
 
 service SSO {
   rpc Login(LoginRequest) returns (TokenResponse);
+  rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc RefreshToken(RefreshTokenRequest) returns (TokenResponse);
 }
 
 message LoginRequest {
   string email = 1;
   string password = 2;
+}
+
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message RegisterResponse {
+  string message = 1;
 }
 
 message TokenResponse {

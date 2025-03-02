@@ -27,23 +27,23 @@ func NewUserRepo(db *sqlx.DB) *userRepo {
 
 func (r *userRepo) GetByEmail(ctx context.Context, email string) (domain.User, error) {
 	query, args := r.qb.Select("*").From("users").Where(sq.Eq{"email": email}).MustSql()
-	var user domain.User
+	var user User
 	if err := r.getContext(ctx, &user, query, args...); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.User{}, domain.ErrUserNotFound
 		}
 		return domain.User{}, err
 	}
-	return user, nil
+	return user.ToDomain(), nil
 }
 
 func (r *userRepo) Create(ctx context.Context, email string) (domain.User, error) {
 	query, args := r.qb.Insert("users").Columns("email").Values(email).Suffix("RETURNING *").MustSql()
-	var user domain.User
+	var user User
 	if err := r.getContext(ctx, &user, query, args...); err != nil {
 		return domain.User{}, err
 	}
-	return user, nil
+	return user.ToDomain(), nil
 }
 
 func (r *userRepo) AddAccount(ctx context.Context, userID uuid.UUID, provider domain.AccountType, password []byte) error {
@@ -54,14 +54,26 @@ func (r *userRepo) AddAccount(ctx context.Context, userID uuid.UUID, provider do
 
 func (r *userRepo) GetByID(ctx context.Context, userID uuid.UUID) (domain.User, error) {
 	query, args := r.qb.Select("*").From("users").Where(sq.Eq{"user_id": userID}).MustSql()
-	var user domain.User
+	var user User
 	if err := r.getContext(ctx, &user, query, args...); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.User{}, domain.ErrUserNotFound
 		}
 		return domain.User{}, err
 	}
-	return user, nil
+	return user.ToDomain(), nil
+}
+
+func (r *userRepo) AccountByID(ctx context.Context, userID uuid.UUID, provider domain.AccountType) (domain.Account, error) {
+	query, args := r.qb.Select("*").From("accounts").Where(sq.Eq{"user_id": userID, "provider": provider}).MustSql()
+	var account Account
+	if err := r.getContext(ctx, &account, query, args...); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.Account{}, domain.ErrAccountNotFound
+		}
+		return domain.Account{}, err
+	}
+	return account.ToDomain(), nil
 }
 
 func (r *userRepo) getContext(ctx context.Context, dest any, query string, args ...any) error {
