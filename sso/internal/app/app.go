@@ -32,10 +32,12 @@ type GRPCController interface {
 
 func New(logger *slog.Logger, conf *config.Config, oauthController OAuthController, gRPCController GRPCController) *app {
 	router := chi.NewRouter()
+
 	httpSrv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", conf.HTTP.Port),
 		Handler: router,
 	}
+
 	grpcSrv := grpc.NewServer()
 	gRPCController.Init(grpcSrv)
 	oauthController.Init(router)
