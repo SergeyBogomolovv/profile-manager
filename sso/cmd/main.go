@@ -36,9 +36,9 @@ func main() {
 
 	logger := newLogger()
 	grpcController := controller.NewGRPCController(logger, authSvc)
-	oauthController := controller.NewOAuthController(logger, conf.OAuth, authSvc)
+	httpController := controller.NewHTTPController(logger, conf.OAuth, authSvc)
 
-	app := app.New(logger, conf, oauthController, grpcController)
+	app := app.New(logger, conf, httpController, grpcController)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()

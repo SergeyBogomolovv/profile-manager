@@ -22,7 +22,7 @@ type app struct {
 	conf    *config.Config
 }
 
-type OAuthController interface {
+type HTTPController interface {
 	Init(router *chi.Mux)
 }
 
@@ -30,7 +30,7 @@ type GRPCController interface {
 	Init(srv *grpc.Server)
 }
 
-func New(logger *slog.Logger, conf *config.Config, oauthController OAuthController, gRPCController GRPCController) *app {
+func New(logger *slog.Logger, conf *config.Config, httpController HTTPController, gRPCController GRPCController) *app {
 	router := chi.NewRouter()
 
 	httpSrv := &http.Server{
@@ -40,7 +40,7 @@ func New(logger *slog.Logger, conf *config.Config, oauthController OAuthControll
 	grpcSrv := grpc.NewServer()
 
 	gRPCController.Init(grpcSrv)
-	oauthController.Init(router)
+	httpController.Init(router)
 
 	return &app{httpSrv: httpSrv, grpcSrv: grpcSrv, logger: logger, conf: conf}
 }

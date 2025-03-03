@@ -20,14 +20,14 @@ type OAuthService interface {
 	OAuth(ctx context.Context, info domain.OAuthUserInfo, provider domain.AccountType) (domain.Tokens, error)
 }
 
-type oauthController struct {
+type httpController struct {
 	logger *slog.Logger
 	state  string
 	oauth  *oauth2.Config
 	svc    OAuthService
 }
 
-func NewOAuthController(logger *slog.Logger, conf config.OAuth, svc OAuthService) *oauthController {
+func NewHTTPController(logger *slog.Logger, conf config.OAuth, svc OAuthService) *httpController {
 	oauth := &oauth2.Config{
 		ClientID:     conf.ClientID,
 		ClientSecret: conf.ClientSecret,
@@ -38,11 +38,11 @@ func NewOAuthController(logger *slog.Logger, conf config.OAuth, svc OAuthService
 		},
 		Endpoint: google.Endpoint,
 	}
-	return &oauthController{svc: svc, oauth: oauth, state: "23490rfdslmfjn34i0skldfj", logger: logger}
+	return &httpController{svc: svc, oauth: oauth, state: "23490rfdslmfjn34i0skldfj", logger: logger}
 }
 
 // Инициализация роутов
-func (c *oauthController) Init(router *chi.Mux) {
+func (c *httpController) Init(router *chi.Mux) {
 	router.Route("/auth", func(r chi.Router) {
 		r.Get("/google", c.HandleLogin)
 		r.Get("/google/callback", c.HandleCallback)
@@ -50,13 +50,13 @@ func (c *oauthController) Init(router *chi.Mux) {
 }
 
 // Перенаправление пользователя на Google OAuth
-func (c *oauthController) HandleLogin(w http.ResponseWriter, r *http.Request) {
+func (c *httpController) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	url := c.oauth.AuthCodeURL(c.state, oauth2.AccessTypeOffline)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
 // Обработка коллбэка от Google
-func (c *oauthController) HandleCallback(w http.ResponseWriter, r *http.Request) {
+func (c *httpController) HandleCallback(w http.ResponseWriter, r *http.Request) {
 	const op = "oauth.HandleCallback"
 	logger := c.logger.With(slog.String("op", op))
 
