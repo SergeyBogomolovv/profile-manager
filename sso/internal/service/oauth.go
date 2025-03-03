@@ -16,11 +16,11 @@ func (s *authService) OAuth(ctx context.Context, info domain.OAuthUserInfo, prov
 	err := s.txManager.Run(ctx, func(ctx context.Context) (err error) {
 		user, err = s.ensureUser(ctx, info.Email)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to ensure user: %w", err)
 		}
 		account, err = s.ensureAccount(ctx, user.ID, provider)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to ensure account: %w", err)
 		}
 		return nil
 	})
@@ -37,35 +37,26 @@ func (s *authService) OAuth(ctx context.Context, info domain.OAuthUserInfo, prov
 
 func (s *authService) ensureUser(ctx context.Context, email string) (domain.User, error) {
 	user, err := s.users.GetByEmail(ctx, email)
-
-	if errors.Is(err, domain.ErrUserNotFound) {
-		user, err = s.users.Create(ctx, email)
-		if err != nil {
-			return domain.User{}, fmt.Errorf("failed to create user: %w", err)
-		}
+	if err == nil {
 		return user, nil
 	}
 
-	if err != nil {
-		return domain.User{}, fmt.Errorf("failed to get user: %w", err)
+	if errors.Is(err, domain.ErrUserNotFound) {
+		return s.users.Create(ctx, email)
 	}
-	return user, nil
+
+	return domain.User{}, err
 }
 
 func (s *authService) ensureAccount(ctx context.Context, userID uuid.UUID, provider domain.AccountType) (domain.Account, error) {
 	account, err := s.users.AccountByID(ctx, userID, provider)
-
-	if errors.Is(err, domain.ErrAccountNotFound) {
-		account, err := s.users.AddAccount(ctx, userID, provider, nil)
-		if err != nil {
-			return domain.Account{}, fmt.Errorf("failed to add account: %w", err)
-		}
-		// TODO: send data to rabbitmq
+	if err == nil {
 		return account, nil
 	}
 
-	if err != nil {
-		return domain.Account{}, fmt.Errorf("failed to get account: %w", err)
+	if errors.Is(err, domain.ErrAccountNotFound) {
+		return s.users.AddAccount(ctx, userID, provider, nil)
 	}
-	return account, nil
+
+	return domain.Account{}, err
 }

@@ -31,9 +31,9 @@ func TestGRPCController_Register(t *testing.T) {
 			name: "success",
 			args: args{req: &pb.RegisterRequest{Email: "xLb3u@example.com", Password: "password"}},
 			mockBehavior: func(svc *mocks.AuthService, req *pb.RegisterRequest) {
-				svc.EXPECT().Register(mock.Anything, req.Email, req.Password).Return(nil).Once()
+				svc.EXPECT().Register(mock.Anything, req.Email, req.Password).Return("user_id", nil).Once()
 			},
-			want:    &pb.RegisterResponse{Message: "User registered successfully"},
+			want:    &pb.RegisterResponse{UserId: "user_id"},
 			wantErr: false,
 		},
 		{
@@ -47,7 +47,7 @@ func TestGRPCController_Register(t *testing.T) {
 			name: "user already exists",
 			args: args{req: &pb.RegisterRequest{Email: "xLb3u@example.com", Password: "password"}},
 			mockBehavior: func(svc *mocks.AuthService, req *pb.RegisterRequest) {
-				svc.EXPECT().Register(mock.Anything, req.Email, req.Password).Return(domain.ErrUserAlreadyExists).Once()
+				svc.EXPECT().Register(mock.Anything, req.Email, req.Password).Return("", domain.ErrUserAlreadyExists).Once()
 			},
 			want:    nil,
 			wantErr: true,
@@ -56,7 +56,7 @@ func TestGRPCController_Register(t *testing.T) {
 			name: "failed to register user",
 			args: args{req: &pb.RegisterRequest{Email: "xLb3u@example.com", Password: "password"}},
 			mockBehavior: func(svc *mocks.AuthService, req *pb.RegisterRequest) {
-				svc.EXPECT().Register(mock.Anything, req.Email, req.Password).Return(assert.AnError).Once()
+				svc.EXPECT().Register(mock.Anything, req.Email, req.Password).Return("", assert.AnError).Once()
 			},
 			want:    nil,
 			wantErr: true,

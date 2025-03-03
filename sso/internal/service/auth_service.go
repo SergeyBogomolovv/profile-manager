@@ -34,44 +34,40 @@ func NewAuthService(txManager transaction.TxManager, users UserRepo, tokens Toke
 	return &authService{users: users, tokens: tokens, txManager: txManager, jwtSecret: jwtSecret}
 }
 
-func (s *authService) Register(ctx context.Context, email, password string) error {
-	return s.txManager.Run(ctx, func(ctx context.Context) error {
-		// Checks if user exists
-		user, err := s.users.GetByEmail(ctx, email)
-		if errors.Is(err, domain.ErrUserNotFound) {
-			// Create user if not exists
-			user, err = s.users.Create(ctx, email)
-			if err != nil {
-				return fmt.Errorf("failed to create user: %w", err)
-			}
-		} else if err != nil {
-			return fmt.Errorf("failed to get user: %w", err)
+func (s *authService) Register(ctx context.Context, email, password string) (string, error) {
+	var userID uuid.UUID
+	err := s.txManager.Run(ctx, func(ctx context.Context) error {
+		user, err := s.ensureUser(ctx, email)
+		if err != nil {
+			return fmt.Errorf("failed to ensure user: %w", err)
 		}
-
+		userID = user.ID
 		// Checks if credentials account type not exists
-		_, err = s.users.AccountByID(ctx, user.ID, domain.AccountTypeCredentials)
+		_, err = s.users.AccountByID(ctx, userID, domain.AccountTypeCredentials)
 		if err == nil {
 			return domain.ErrUserAlreadyExists
 		}
 		if !errors.Is(err, domain.ErrAccountNotFound) {
 			return fmt.Errorf("failed to get account: %w", err)
 		}
-
 		// Hash password
 		hashedPassword, err := hashPassword(password)
 		if err != nil {
 			return fmt.Errorf("failed to hash password: %w", err)
 		}
-
 		// Create credentials account type
-		_, err = s.users.AddAccount(ctx, user.ID, domain.AccountTypeCredentials, hashedPassword)
+		_, err = s.users.AddAccount(ctx, userID, domain.AccountTypeCredentials, hashedPassword)
 		if err != nil {
 			return fmt.Errorf("failed to add account: %w", err)
 		}
-
-		// TODO: send data to rabbitmq
 		return nil
 	})
+	if err != nil {
+		return "", err
+	}
+
+	// TODO: send data to rabbitmq
+	return userID.String(), nil
 }
 
 func (s *authService) Login(ctx context.Context, email, password string) (domain.Tokens, error) {

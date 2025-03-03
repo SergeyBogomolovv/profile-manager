@@ -14,7 +14,7 @@ import (
 )
 
 type AuthService interface {
-	Register(ctx context.Context, email, password string) error
+	Register(ctx context.Context, email, password string) (string, error)
 	Login(ctx context.Context, email, password string) (domain.Tokens, error)
 	Refresh(ctx context.Context, refreshToken string) (string, error)
 }
@@ -42,15 +42,16 @@ func (c *gRPCController) Register(ctx context.Context, req *pb.RegisterRequest) 
 	if err := c.validate.Var(req.Email, "required,email"); err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid email")
 	}
-
-	if err := c.svc.Register(ctx, req.Email, req.Password); err != nil {
+	userID, err := c.svc.Register(ctx, req.Email, req.Password)
+	if err != nil {
 		if errors.Is(err, domain.ErrUserAlreadyExists) {
 			return nil, status.Errorf(codes.AlreadyExists, "user with email %s already exists", req.Email)
 		}
 		logger.Error("failed to register user", "error", err)
 		return nil, status.Error(codes.Internal, "failed to register user")
 	}
-	return &pb.RegisterResponse{Message: "User registered successfully"}, nil
+	//TODO: send userID
+	return &pb.RegisterResponse{UserId: userID}, nil
 }
 
 func (c *gRPCController) Login(ctx context.Context, req *pb.LoginRequest) (*pb.TokensResponse, error) {

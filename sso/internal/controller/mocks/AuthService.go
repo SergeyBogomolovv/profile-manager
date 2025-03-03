@@ -139,21 +139,31 @@ func (_c *AuthService_Refresh_Call) RunAndReturn(run func(context.Context, strin
 }
 
 // Register provides a mock function with given fields: ctx, email, password
-func (_m *AuthService) Register(ctx context.Context, email string, password string) error {
+func (_m *AuthService) Register(ctx context.Context, email string, password string) (string, error) {
 	ret := _m.Called(ctx, email, password)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Register")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (string, error)); ok {
+		return rf(ctx, email, password)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) string); ok {
 		r0 = rf(ctx, email, password)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(string)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, email, password)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // AuthService_Register_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Register'
@@ -176,12 +186,12 @@ func (_c *AuthService_Register_Call) Run(run func(ctx context.Context, email str
 	return _c
 }
 
-func (_c *AuthService_Register_Call) Return(_a0 error) *AuthService_Register_Call {
-	_c.Call.Return(_a0)
+func (_c *AuthService_Register_Call) Return(_a0 string, _a1 error) *AuthService_Register_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *AuthService_Register_Call) RunAndReturn(run func(context.Context, string, string) error) *AuthService_Register_Call {
+func (_c *AuthService_Register_Call) RunAndReturn(run func(context.Context, string, string) (string, error)) *AuthService_Register_Call {
 	_c.Call.Return(run)
 	return _c
 }
