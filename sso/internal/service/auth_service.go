@@ -14,7 +14,7 @@ import (
 type UserRepo interface {
 	GetByEmail(ctx context.Context, email string) (domain.User, error)
 	Create(ctx context.Context, email string) (domain.User, error)
-	AddAccount(ctx context.Context, userID uuid.UUID, provider domain.AccountType, password []byte) error
+	AddAccount(ctx context.Context, userID uuid.UUID, provider domain.AccountType, password []byte) (domain.Account, error)
 	AccountByID(ctx context.Context, userID uuid.UUID, provider domain.AccountType) (domain.Account, error)
 }
 
@@ -64,7 +64,8 @@ func (s *authService) Register(ctx context.Context, email, password string) erro
 		}
 
 		// Create credentials account type
-		if err := s.users.AddAccount(ctx, user.ID, domain.AccountTypeCredentials, hashedPassword); err != nil {
+		_, err = s.users.AddAccount(ctx, user.ID, domain.AccountTypeCredentials, hashedPassword)
+		if err != nil {
 			return fmt.Errorf("failed to add account: %w", err)
 		}
 

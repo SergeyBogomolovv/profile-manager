@@ -46,10 +46,17 @@ func (r *userRepo) Create(ctx context.Context, email string) (domain.User, error
 	return user.ToDomain(), nil
 }
 
-func (r *userRepo) AddAccount(ctx context.Context, userID uuid.UUID, provider domain.AccountType, password []byte) error {
-	query, args := r.qb.Insert("accounts").Columns("user_id", "provider", "password").Values(userID, provider, password).MustSql()
-	_, err := r.execContext(ctx, query, args...)
-	return err
+func (r *userRepo) AddAccount(ctx context.Context, userID uuid.UUID, provider domain.AccountType, password []byte) (domain.Account, error) {
+	query, args := r.qb.
+		Insert("accounts").
+		Columns("user_id", "provider", "password").
+		Values(userID, provider, password).
+		Suffix("RETURNING *").MustSql()
+	var account Account
+	if err := r.getContext(ctx, &account, query, args...); err != nil {
+		return domain.Account{}, err
+	}
+	return account.ToDomain(), nil
 }
 
 func (r *userRepo) GetByID(ctx context.Context, userID uuid.UUID) (domain.User, error) {
@@ -82,12 +89,4 @@ func (r *userRepo) getContext(ctx context.Context, dest any, query string, args 
 		return tx.GetContext(ctx, dest, query, args...)
 	}
 	return r.db.GetContext(ctx, dest, query, args...)
-}
-
-func (r *userRepo) execContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
-	tx := transaction.ExtractTx(ctx)
-	if tx != nil {
-		return tx.ExecContext(ctx, query, args...)
-	}
-	return r.db.ExecContext(ctx, query, args...)
 }

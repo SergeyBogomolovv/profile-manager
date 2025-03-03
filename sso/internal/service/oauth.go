@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *authService) GoogleSignIn(ctx context.Context, info domain.OAuthUserInfo) (domain.Tokens, error) {
+func (s *authService) OAuth(ctx context.Context, info domain.OAuthUserInfo, provider domain.AccountType) (domain.Tokens, error) {
 	var user domain.User
 	var account domain.Account
 
@@ -18,7 +18,7 @@ func (s *authService) GoogleSignIn(ctx context.Context, info domain.OAuthUserInf
 		if err != nil {
 			return err
 		}
-		account, err = s.ensureAccount(ctx, user.ID, domain.AccountTypeGoogle)
+		account, err = s.ensureAccount(ctx, user.ID, provider)
 		if err != nil {
 			return err
 		}
@@ -52,16 +52,13 @@ func (s *authService) ensureUser(ctx context.Context, email string) (domain.User
 	return user, nil
 }
 
-func (s *authService) ensureAccount(ctx context.Context, userID uuid.UUID, accountType domain.AccountType) (domain.Account, error) {
-	account, err := s.users.AccountByID(ctx, userID, accountType)
+func (s *authService) ensureAccount(ctx context.Context, userID uuid.UUID, provider domain.AccountType) (domain.Account, error) {
+	account, err := s.users.AccountByID(ctx, userID, provider)
 
 	if errors.Is(err, domain.ErrAccountNotFound) {
-		if err := s.users.AddAccount(ctx, userID, accountType, nil); err != nil {
-			return domain.Account{}, fmt.Errorf("failed to add account: %w", err)
-		}
-		account, err = s.users.AccountByID(ctx, userID, accountType)
+		account, err := s.users.AddAccount(ctx, userID, provider, nil)
 		if err != nil {
-			return domain.Account{}, fmt.Errorf("failed to get account: %w", err)
+			return domain.Account{}, fmt.Errorf("failed to add account: %w", err)
 		}
 		// TODO: send data to rabbitmq
 		return account, nil

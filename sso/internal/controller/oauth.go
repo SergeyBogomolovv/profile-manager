@@ -17,7 +17,7 @@ import (
 const userInfoUrl = "https://www.googleapis.com/oauth2/v2/userinfo"
 
 type OAuthService interface {
-	GoogleSignIn(ctx context.Context, user domain.OAuthUserInfo) (domain.Tokens, error)
+	OAuth(ctx context.Context, info domain.OAuthUserInfo, provider domain.AccountType) (domain.Tokens, error)
 }
 
 type oauthController struct {
@@ -57,6 +57,9 @@ func (c *oauthController) HandleLogin(w http.ResponseWriter, r *http.Request) {
 
 // Обработка коллбэка от Google
 func (c *oauthController) HandleCallback(w http.ResponseWriter, r *http.Request) {
+	const op = "oauth.HandleCallback"
+	logger := c.logger.With(slog.String("op", op))
+
 	state := r.FormValue("state")
 	if state != c.state {
 		httpx.WriteError(w, "Invalid OAuth state", http.StatusBadRequest)
@@ -66,6 +69,7 @@ func (c *oauthController) HandleCallback(w http.ResponseWriter, r *http.Request)
 	code := r.FormValue("code")
 	token, err := c.oauth.Exchange(r.Context(), code)
 	if err != nil {
+		logger.Error("failed to exchange token", "err", err)
 		httpx.WriteError(w, "Failed to exchange token", http.StatusInternalServerError)
 		return
 	}
@@ -73,6 +77,7 @@ func (c *oauthController) HandleCallback(w http.ResponseWriter, r *http.Request)
 	client := c.oauth.Client(r.Context(), token)
 	resp, err := client.Get(userInfoUrl)
 	if err != nil {
+		logger.Error("failed to get user info", "err", err)
 		httpx.WriteError(w, "Failed to get user info", http.StatusInternalServerError)
 		return
 	}
@@ -80,13 +85,14 @@ func (c *oauthController) HandleCallback(w http.ResponseWriter, r *http.Request)
 
 	var user domain.OAuthUserInfo
 	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		logger.Error("failed to decode user info", "err", err)
 		httpx.WriteError(w, "Failed to decode user info", http.StatusInternalServerError)
 		return
 	}
 
-	tokens, err := c.svc.GoogleSignIn(r.Context(), user)
+	tokens, err := c.svc.OAuth(r.Context(), user, domain.AccountTypeGoogle)
 	if err != nil {
-		c.logger.Error("Failed to sign in", "err", err)
+		logger.Error("failed to sign in", "err", err)
 		httpx.WriteError(w, "Failed to sign in", http.StatusInternalServerError)
 		return
 	}
