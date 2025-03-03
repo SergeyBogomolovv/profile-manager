@@ -17,6 +17,7 @@ type AuthService interface {
 	Register(ctx context.Context, email, password string) (string, error)
 	Login(ctx context.Context, email, password string) (domain.Tokens, error)
 	Refresh(ctx context.Context, refreshToken string) (string, error)
+	Logout(ctx context.Context, refreshToken string) error
 }
 
 type gRPCController struct {
@@ -86,4 +87,11 @@ func (c *gRPCController) Refresh(ctx context.Context, req *pb.RefreshRequest) (*
 		return nil, status.Errorf(codes.Internal, "failed to refresh token: %v", err)
 	}
 	return &pb.AccessTokenResponse{AccessToken: token}, nil
+}
+
+func (c *gRPCController) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutResponse, error) {
+	if err := c.svc.Logout(ctx, req.RefreshToken); err != nil {
+		return nil, status.Error(codes.Internal, "failed to logout")
+	}
+	return &pb.LogoutResponse{Status: "success"}, nil
 }

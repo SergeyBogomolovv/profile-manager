@@ -8,6 +8,7 @@ service SSO {
   rpc Login(LoginRequest) returns (TokensResponse);
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc Refresh(RefreshRequest) returns (AccessTokenResponse);
+  rpc Logount(LogoutRequest) returns (LogoutResponse);
 }
 
 message LoginRequest {
@@ -35,4 +36,12 @@ message AccessTokenResponse {
 
 message RefreshRequest {
   string refresh_token = 1;
+}
+
+message LogoutRequest {
+  string refresh_token = 1;
+}
+
+message LogoutResponse {
+  string status = 1;
 }
