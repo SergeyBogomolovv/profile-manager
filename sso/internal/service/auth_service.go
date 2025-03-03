@@ -21,6 +21,7 @@ type UserRepo interface {
 type TokenRepo interface {
 	Create(ctx context.Context, userID uuid.UUID) (string, error)
 	UserID(ctx context.Context, token string) (uuid.UUID, error)
+	Revoke(ctx context.Context, token string) error
 }
 
 type authService struct {
@@ -115,4 +116,11 @@ func hashPassword(password string) ([]byte, error) {
 
 func comparePassword(password string, hash []byte) error {
 	return bcrypt.CompareHashAndPassword(hash, []byte(password))
+}
+
+func (s *authService) Logout(ctx context.Context, refreshToken string) error {
+	if err := s.tokens.Revoke(ctx, refreshToken); err != nil {
+		return fmt.Errorf("failed to revoke token: %w", err)
+	}
+	return nil
 }

@@ -31,7 +31,7 @@ func (r *tokensRepo) Create(ctx context.Context, userID uuid.UUID) (string, erro
 	}
 
 	token := uuid.New().String()
-	if err := r.db.Set(ctx, token, data, domain.RefreshTokenTTL).Err(); err != nil {
+	if err := r.db.Set(ctx, tokenKey(token), data, domain.RefreshTokenTTL).Err(); err != nil {
 		return "", fmt.Errorf("failed to create refresh token: %w", err)
 	}
 	return token, nil
@@ -39,7 +39,7 @@ func (r *tokensRepo) Create(ctx context.Context, userID uuid.UUID) (string, erro
 
 // Gets user id from refresh token, if token is not exists, returns domain.ErrInvalidToken
 func (r *tokensRepo) UserID(ctx context.Context, token string) (uuid.UUID, error) {
-	data, err := r.db.Get(ctx, token).Bytes()
+	data, err := r.db.Get(ctx, tokenKey(token)).Bytes()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return uuid.Nil, domain.ErrInvalidToken
@@ -54,4 +54,18 @@ func (r *tokensRepo) UserID(ctx context.Context, token string) (uuid.UUID, error
 		return uuid.Nil, domain.ErrInvalidToken
 	}
 	return payload.UserID, nil
+}
+
+func (r *tokensRepo) Revoke(ctx context.Context, token string) error {
+	if err := r.db.Del(ctx, tokenKey(token)).Err(); err != nil {
+		if errors.Is(err, redis.Nil) {
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
+func tokenKey(token string) string {
+	return fmt.Sprintf("refreshToken:%s", token)
 }

@@ -144,6 +144,35 @@ func TestAuthService_Refresh(t *testing.T) {
 	}
 }
 
+func TestAuthService_Logout(t *testing.T) {
+	type MockBehavior func(tokens *mocks.TokenRepo, token string)
+	testCases := []struct {
+		name         string
+		token        string
+		mockBehavior MockBehavior
+		want         error
+	}{
+		{
+			name:  "success",
+			token: "token",
+			mockBehavior: func(tokens *mocks.TokenRepo, token string) {
+				tokens.EXPECT().Revoke(mock.Anything, token).Return(nil)
+			},
+			want: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tokenRepo := mocks.NewTokenRepo(t)
+			svc := service.NewAuthService(nil, nil, tokenRepo, []byte("secret"))
+			tc.mockBehavior(tokenRepo, tc.token)
+			err := svc.Logout(context.Background(), tc.token)
+			assert.ErrorIs(t, err, tc.want)
+		})
+	}
+}
+
 func TestAuthService_Register(t *testing.T) {
 	t.Skip()
 }
