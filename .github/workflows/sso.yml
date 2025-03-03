@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'sso/**'
+      - 'common/**'
 
 jobs:
   build:
@@ -19,6 +20,9 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '1.24'
+
+      - name: Setup Go Workspace
+        run: go work sync
 
       - name: Test
         working-directory: ./sso
@@ -38,4 +42,5 @@ jobs:
         with:
           push: true
           tags: grekas/profile-manager-sso:latest
-          context: ./sso
+          context: .
+          file: ./sso/Dockerfile
