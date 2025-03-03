@@ -18,6 +18,20 @@ func signJwt(userID string, secretKey []byte) (string, error) {
 	return token, nil
 }
 
+func VerifyJWT(tokenString string, secret []byte) (*domain.TokenClaims, error) {
+	claims := &domain.TokenClaims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
+		return secret, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !token.Valid {
+		return nil, jwt.ErrSignatureInvalid
+	}
+	return claims, nil
+}
+
 func (s *authService) createTokens(ctx context.Context, userID uuid.UUID) (domain.Tokens, error) {
 	refreshToken, err := s.tokens.Create(ctx, userID)
 	if err != nil {

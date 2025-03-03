@@ -100,9 +100,6 @@ func (s *authService) Login(ctx context.Context, email, password string) (domain
 func (s *authService) Refresh(ctx context.Context, refreshToken string) (string, error) {
 	userID, err := s.tokens.UserID(ctx, refreshToken)
 	if err != nil {
-		if errors.Is(err, domain.ErrInvalidToken) {
-			return "", domain.ErrInvalidToken
-		}
 		return "", fmt.Errorf("failed to get user id: %w", err)
 	}
 	accessToken, err := signJwt(userID.String(), s.jwtSecret)
