@@ -51,7 +51,6 @@ func (c *gRPCController) Register(ctx context.Context, req *pb.RegisterRequest) 
 		logger.Error("failed to register user", "error", err)
 		return nil, status.Error(codes.Internal, "failed to register user")
 	}
-	//TODO: send userID
 	return &pb.RegisterResponse{UserId: userID}, nil
 }
 
@@ -90,7 +89,11 @@ func (c *gRPCController) Refresh(ctx context.Context, req *pb.RefreshRequest) (*
 }
 
 func (c *gRPCController) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutResponse, error) {
+	const op = "grpc.Logout"
+	logger := c.logger.With(slog.String("op", op))
+
 	if err := c.svc.Logout(ctx, req.RefreshToken); err != nil {
+		logger.Error("failed to logout", "error", err)
 		return nil, status.Error(codes.Internal, "failed to logout")
 	}
 	return &pb.LogoutResponse{Status: "success"}, nil

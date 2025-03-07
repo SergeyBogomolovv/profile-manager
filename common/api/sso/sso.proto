@@ -8,7 +8,7 @@ service SSO {
   rpc Login(LoginRequest) returns (TokensResponse);
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc Refresh(RefreshRequest) returns (AccessTokenResponse);
-  rpc Logount(LogoutRequest) returns (LogoutResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
 }
 
 message LoginRequest {

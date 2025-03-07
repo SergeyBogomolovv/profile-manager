@@ -22,7 +22,7 @@ const (
 	SSO_Login_FullMethodName    = "/sso.SSO/Login"
 	SSO_Register_FullMethodName = "/sso.SSO/Register"
 	SSO_Refresh_FullMethodName  = "/sso.SSO/Refresh"
-	SSO_Logount_FullMethodName  = "/sso.SSO/Logount"
+	SSO_Logout_FullMethodName   = "/sso.SSO/Logout"
 )
 
 // SSOClient is the client API for SSO service.
@@ -32,7 +32,7 @@ type SSOClient interface {
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*TokensResponse, error)
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	Refresh(ctx context.Context, in *RefreshRequest, opts ...grpc.CallOption) (*AccessTokenResponse, error)
-	Logount(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*LogoutResponse, error)
+	Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*LogoutResponse, error)
 }
 
 type sSOClient struct {
@@ -73,10 +73,10 @@ func (c *sSOClient) Refresh(ctx context.Context, in *RefreshRequest, opts ...grp
 	return out, nil
 }
 
-func (c *sSOClient) Logount(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*LogoutResponse, error) {
+func (c *sSOClient) Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*LogoutResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LogoutResponse)
-	err := c.cc.Invoke(ctx, SSO_Logount_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, SSO_Logout_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ type SSOServer interface {
 	Login(context.Context, *LoginRequest) (*TokensResponse, error)
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	Refresh(context.Context, *RefreshRequest) (*AccessTokenResponse, error)
-	Logount(context.Context, *LogoutRequest) (*LogoutResponse, error)
+	Logout(context.Context, *LogoutRequest) (*LogoutResponse, error)
 	mustEmbedUnimplementedSSOServer()
 }
 
@@ -110,8 +110,8 @@ func (UnimplementedSSOServer) Register(context.Context, *RegisterRequest) (*Regi
 func (UnimplementedSSOServer) Refresh(context.Context, *RefreshRequest) (*AccessTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Refresh not implemented")
 }
-func (UnimplementedSSOServer) Logount(context.Context, *LogoutRequest) (*LogoutResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Logount not implemented")
+func (UnimplementedSSOServer) Logout(context.Context, *LogoutRequest) (*LogoutResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Logout not implemented")
 }
 func (UnimplementedSSOServer) mustEmbedUnimplementedSSOServer() {}
 func (UnimplementedSSOServer) testEmbeddedByValue()             {}
@@ -188,20 +188,20 @@ func _SSO_Refresh_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SSO_Logount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _SSO_Logout_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LogoutRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SSOServer).Logount(ctx, in)
+		return srv.(SSOServer).Logout(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: SSO_Logount_FullMethodName,
+		FullMethod: SSO_Logout_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SSOServer).Logount(ctx, req.(*LogoutRequest))
+		return srv.(SSOServer).Logout(ctx, req.(*LogoutRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -226,8 +226,8 @@ var SSO_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SSO_Refresh_Handler,
 		},
 		{
-			MethodName: "Logount",
-			Handler:    _SSO_Logount_Handler,
+			MethodName: "Logout",
+			Handler:    _SSO_Logout_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
