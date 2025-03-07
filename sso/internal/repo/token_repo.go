@@ -56,14 +56,13 @@ func (r *tokensRepo) UserID(ctx context.Context, token string) (uuid.UUID, error
 	return payload.UserID, nil
 }
 
+// If token is not exists, returns nil
 func (r *tokensRepo) Revoke(ctx context.Context, token string) error {
-	if err := r.db.Del(ctx, tokenKey(token)).Err(); err != nil {
-		if errors.Is(err, redis.Nil) {
-			return nil
-		}
-		return err
+	err := r.db.Del(ctx, tokenKey(token)).Err()
+	if errors.Is(err, redis.Nil) {
+		return nil
 	}
-	return nil
+	return err
 }
 
 func tokenKey(token string) string {

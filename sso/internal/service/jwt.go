@@ -20,7 +20,7 @@ func signJwt(userID string, secretKey []byte) (string, error) {
 
 func VerifyJWT(tokenString string, secret []byte) (*domain.TokenClaims, error) {
 	claims := &domain.TokenClaims{}
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (any, error) {
 		return secret, nil
 	})
 	if err != nil {

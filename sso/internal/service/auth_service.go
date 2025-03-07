@@ -110,17 +110,17 @@ func (s *authService) Refresh(ctx context.Context, refreshToken string) (string,
 	return accessToken, nil
 }
 
+func (s *authService) Logout(ctx context.Context, refreshToken string) error {
+	if err := s.tokens.Revoke(ctx, refreshToken); err != nil {
+		return fmt.Errorf("failed to revoke token: %w", err)
+	}
+	return nil
+}
+
 func hashPassword(password string) ([]byte, error) {
 	return bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 }
 
 func comparePassword(password string, hash []byte) error {
 	return bcrypt.CompareHashAndPassword(hash, []byte(password))
-}
-
-func (s *authService) Logout(ctx context.Context, refreshToken string) error {
-	if err := s.tokens.Revoke(ctx, refreshToken); err != nil {
-		return fmt.Errorf("failed to revoke token: %w", err)
-	}
-	return nil
 }

@@ -2,24 +2,19 @@ package config
 
 import (
 	"log"
+	"time"
 
 	"github.com/spf13/viper"
 )
 
 type (
 	Config struct {
-		GRPC        GRPC   `mapstructure:"grpc"`
-		HTTP        HTTP   `mapstructure:"http"`
+		GrpcPort    int    `mapstructure:"grpc_port"`
+		HttpPort    int    `mapstructure:"http_port"`
 		PostgresURL string `mapstructure:"postgres_url"`
 		RedisURL    string `mapstructure:"redis_url"`
 		OAuth       OAuth  `mapstructure:"oauth"`
 		JWT         JWT    `mapstructure:"jwt"`
-	}
-	GRPC struct {
-		Port int `mapstructure:"port"`
-	}
-	HTTP struct {
-		Port int `mapstructure:"port"`
 	}
 	OAuth struct {
 		ClientID     string `mapstructure:"client_id"`
@@ -27,7 +22,8 @@ type (
 		RedirectURL  string `mapstructure:"redirect_url"`
 	}
 	JWT struct {
-		SecretKey string `mapstructure:"secret_key"`
+		SecretKey string        `mapstructure:"secret_key"`
+		TTL       time.Duration `mapstructure:"ttl"`
 	}
 )
 

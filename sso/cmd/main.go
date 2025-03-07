@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	"github.com/SergeyBogomolovv/profile-manager/common/postgres"
@@ -26,7 +25,9 @@ func main() {
 	conf := config.MustLoadConfig(*confPath)
 
 	redis := redis.MustNew(conf.RedisURL)
+	defer redis.Close()
 	postgres := postgres.MustNew(conf.PostgresURL)
+	defer postgres.Close()
 
 	userRepo := repo.NewUserRepo(postgres)
 	tokenRepo := repo.NewTokensRepo(redis)
@@ -43,18 +44,9 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		<-ctx.Done()
-		app.Stop()
-		redis.Close()
-		postgres.Close()
-	}()
-
 	app.Start()
-	wg.Wait()
+	<-ctx.Done()
+	app.Stop()
 }
 
 func init() {
