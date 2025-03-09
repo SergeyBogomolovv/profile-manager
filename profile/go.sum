@@ -4,6 +4,8 @@ github.com/Masterminds/squirrel v1.5.4 h1:uUcX/aBc8O7Fg9kaISIUsHXdKuqehiXAMQTYX8
 github.com/Masterminds/squirrel v1.5.4/go.mod h1:NNaOrjSoIDfDA40n7sr2tPNZRfjzjA400rg+riTZj10=
 github.com/SergeyBogomolovv/profile-manager/common v0.0.0-20250303121027-ee60759aba70 h1:1lkJGcG3zw+F6XsbkY6Y8k52o/lb8MIW+bL1s6NvmJQ=
 github.com/SergeyBogomolovv/profile-manager/common v0.0.0-20250303121027-ee60759aba70/go.mod h1:zbzKCrj0JnZaxgng/7MovutScayWJXrdxYbjtbykINQ=
+github.com/SergeyBogomolovv/profile-manager/common v0.0.0-20250309094935-1177899c9f16 h1:fy336tlqy7TIMnRMGudi6Uk8b2IaPkWjFiAZlNWfNXw=
+github.com/SergeyBogomolovv/profile-manager/common v0.0.0-20250309094935-1177899c9f16/go.mod h1:yYZ/hpTyuBYZe9oqH6119XipklTghsvom2Zy9GoeQg8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
