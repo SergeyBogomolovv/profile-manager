@@ -1,5 +1,7 @@
 package domain
 
+import "github.com/google/uuid"
+
 type UserGender string
 
 const (
@@ -9,7 +11,7 @@ const (
 )
 
 type Profile struct {
-	UserID    int64
+	UserID    uuid.UUID
 	Username  string
 	FirstName string
 	LastName  string

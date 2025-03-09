@@ -7,3 +7,6 @@ gen-proto:
 
 run-sso:
 	@go run sso/cmd/main.go
+
+run-profile:
+	@go run profile/cmd/main.go
