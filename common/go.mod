@@ -1,6 +1,6 @@
 module github.com/SergeyBogomolovv/profile-manager/common
 
-go 1.24.0
+go 1.24.1
 
 require (
 	github.com/jmoiron/sqlx v1.4.0

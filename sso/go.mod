@@ -1,6 +1,6 @@
 module github.com/SergeyBogomolovv/profile-manager/sso
 
-go 1.24.0
+go 1.24.1
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
