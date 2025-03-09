@@ -6,14 +6,14 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build -o sso cmd/main.go
+RUN go build -o profile cmd/main.go
 
 FROM gcr.io/distroless/base-debian12
 
 WORKDIR /
 
-COPY --from=builder /app/sso /sso
+COPY --from=builder /app/profile /profile
 
 USER nonroot:nonroot
 
-CMD ["/sso"]
+CMD ["/profile"]
