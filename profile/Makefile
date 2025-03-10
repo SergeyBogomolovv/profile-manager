@@ -11,3 +11,6 @@ migrate-up:
 migrate-down:
 	@name=$(name);
 	@migrate -path=$(MIGRATIONS_PATH) -database=$(POSTGRES_URL) down $(name)
+
+run:
+	@go run cmd/main.go --config=../config/profile.yml

@@ -9,7 +9,9 @@ import (
 	"syscall"
 
 	"github.com/SergeyBogomolovv/profile-manager/common/postgres"
+	"github.com/SergeyBogomolovv/profile-manager/common/rabbitmq"
 	"github.com/SergeyBogomolovv/profile-manager/profile/internal/app"
+	"github.com/SergeyBogomolovv/profile-manager/profile/internal/broker"
 	"github.com/SergeyBogomolovv/profile-manager/profile/internal/config"
 	"github.com/SergeyBogomolovv/profile-manager/profile/internal/controller"
 	"github.com/SergeyBogomolovv/profile-manager/profile/internal/repo"
@@ -24,6 +26,8 @@ func main() {
 
 	postgres := postgres.MustNew(conf.PostgresURL)
 	defer postgres.Close()
+	amqpConn := rabbitmq.MustNew(conf.RabbitmqURL)
+	defer amqpConn.Close()
 
 	logger := newLogger()
 
@@ -31,14 +35,18 @@ func main() {
 	profileSvc := service.NewProfileService(profileRepo)
 	grpcController := controller.NewGRPCController(logger, profileSvc)
 
+	broker := broker.MustNew(amqpConn, profileSvc)
+
 	app := app.New(logger, conf, grpcController)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
+	go broker.Consume(ctx)
 	app.Start()
 	<-ctx.Done()
 	app.Stop()
+	broker.Close()
 }
 
 func init() {

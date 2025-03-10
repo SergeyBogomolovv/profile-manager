@@ -10,3 +10,7 @@ type UserRegister struct {
 const (
 	RegisterExchange = "register_exchange"
 )
+
+const (
+	ProfileQueue = "profile_queue"
+)
