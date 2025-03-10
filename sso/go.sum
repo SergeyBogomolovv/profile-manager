@@ -6,6 +6,8 @@ github.com/Masterminds/squirrel v1.5.4 h1:uUcX/aBc8O7Fg9kaISIUsHXdKuqehiXAMQTYX8
 github.com/Masterminds/squirrel v1.5.4/go.mod h1:NNaOrjSoIDfDA40n7sr2tPNZRfjzjA400rg+riTZj10=
 github.com/SergeyBogomolovv/profile-manager/common v0.0.0-20250303121027-ee60759aba70 h1:1lkJGcG3zw+F6XsbkY6Y8k52o/lb8MIW+bL1s6NvmJQ=
 github.com/SergeyBogomolovv/profile-manager/common v0.0.0-20250303121027-ee60759aba70/go.mod h1:zbzKCrj0JnZaxgng/7MovutScayWJXrdxYbjtbykINQ=
+github.com/SergeyBogomolovv/profile-manager/common v0.0.0-20250309095235-b77fce1f0848 h1:Lw+/9khGH0ErkQSNZgJWMkN0CE7MnE6qLwA+l7tnkOs=
+github.com/SergeyBogomolovv/profile-manager/common v0.0.0-20250309095235-b77fce1f0848/go.mod h1:yYZ/hpTyuBYZe9oqH6119XipklTghsvom2Zy9GoeQg8=
 github.com/bsm/ginkgo/v2 v2.12.0 h1:Ny8MWAHyOepLGlLKYmXG4IEkioBysk6GpaRTLC8zwWs=
 github.com/bsm/ginkgo/v2 v2.12.0/go.mod h1:SwYbGRRDovPVboqFv0tPTcG1sN61LM1Z4ARdbAV9g4c=
 github.com/bsm/gomega v1.27.10 h1:yeMWxP2pV2fG3FgAODIY8EiRE3dy0aeFYt4l7wh6yKA=
