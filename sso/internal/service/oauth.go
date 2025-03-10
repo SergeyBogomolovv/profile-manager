@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/SergeyBogomolovv/profile-manager/common/api/events"
 	"github.com/SergeyBogomolovv/profile-manager/sso/internal/domain"
 	"github.com/google/uuid"
 )
@@ -14,15 +15,24 @@ func (s *authService) OAuth(ctx context.Context, info domain.OAuthUserInfo, prov
 	var account domain.Account
 
 	err := s.txManager.Run(ctx, func(ctx context.Context) (err error) {
-		user, err = s.ensureUser(ctx, info.Email)
+		usr, added, err := s.ensureUser(ctx, info.Email)
 		if err != nil {
 			return fmt.Errorf("failed to ensure user: %w", err)
 		}
+		user = usr
 		account, err = s.ensureAccount(ctx, user.ID, provider)
 		if err != nil {
 			return fmt.Errorf("failed to ensure account: %w", err)
 		}
-		return nil
+		if !added {
+			return nil
+		}
+		return s.broker.PublishUserRegister(events.UserRegister{
+			ID:     user.ID.String(),
+			Email:  user.Email,
+			Name:   info.Name,
+			Avatar: info.Picture,
+		})
 	})
 	if err != nil {
 		return domain.Tokens{}, err
@@ -35,17 +45,21 @@ func (s *authService) OAuth(ctx context.Context, info domain.OAuthUserInfo, prov
 	return s.createTokens(ctx, user.ID)
 }
 
-func (s *authService) ensureUser(ctx context.Context, email string) (domain.User, error) {
+func (s *authService) ensureUser(ctx context.Context, email string) (domain.User, bool, error) {
 	user, err := s.users.GetByEmail(ctx, email)
 	if err == nil {
-		return user, nil
+		return user, false, nil
 	}
 
 	if errors.Is(err, domain.ErrUserNotFound) {
-		return s.users.Create(ctx, email)
+		user, err := s.users.Create(ctx, email)
+		if err != nil {
+			return domain.User{}, false, err
+		}
+		return user, true, nil
 	}
 
-	return domain.User{}, err
+	return domain.User{}, false, err
 }
 
 func (s *authService) ensureAccount(ctx context.Context, userID uuid.UUID, provider domain.AccountType) (domain.Account, error) {

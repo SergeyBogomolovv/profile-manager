@@ -5,11 +5,16 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/SergeyBogomolovv/profile-manager/common/api/events"
 	"github.com/SergeyBogomolovv/profile-manager/common/transaction"
 	"github.com/SergeyBogomolovv/profile-manager/sso/internal/domain"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
+
+type Broker interface {
+	PublishUserRegister(user events.UserRegister) error
+}
 
 type UserRepo interface {
 	GetByEmail(ctx context.Context, email string) (domain.User, error)
@@ -28,17 +33,18 @@ type authService struct {
 	txManager transaction.TxManager
 	users     UserRepo
 	tokens    TokenRepo
+	broker    Broker
 	jwtSecret []byte
 }
 
-func NewAuthService(txManager transaction.TxManager, users UserRepo, tokens TokenRepo, jwtSecret []byte) *authService {
-	return &authService{users: users, tokens: tokens, txManager: txManager, jwtSecret: jwtSecret}
+func NewAuthService(broker Broker, txManager transaction.TxManager, users UserRepo, tokens TokenRepo, jwtSecret []byte) *authService {
+	return &authService{users: users, tokens: tokens, txManager: txManager, jwtSecret: jwtSecret, broker: broker}
 }
 
 func (s *authService) Register(ctx context.Context, email, password string) (string, error) {
 	var userID uuid.UUID
 	err := s.txManager.Run(ctx, func(ctx context.Context) error {
-		user, err := s.ensureUser(ctx, email)
+		user, added, err := s.ensureUser(ctx, email)
 		if err != nil {
 			return fmt.Errorf("failed to ensure user: %w", err)
 		}
@@ -61,13 +67,19 @@ func (s *authService) Register(ctx context.Context, email, password string) (str
 		if err != nil {
 			return fmt.Errorf("failed to add account: %w", err)
 		}
-		return nil
+
+		if !added {
+			return nil
+		}
+		// Publish user register
+		return s.broker.PublishUserRegister(events.UserRegister{
+			ID:    userID.String(),
+			Email: email,
+		})
 	})
 	if err != nil {
 		return "", err
 	}
-
-	// TODO: send data to rabbitmq
 	return userID.String(), nil
 }
 

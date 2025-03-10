@@ -9,9 +9,11 @@ import (
 	"syscall"
 
 	"github.com/SergeyBogomolovv/profile-manager/common/postgres"
+	"github.com/SergeyBogomolovv/profile-manager/common/rabbitmq"
 	"github.com/SergeyBogomolovv/profile-manager/common/redis"
 	"github.com/SergeyBogomolovv/profile-manager/common/transaction"
 	"github.com/SergeyBogomolovv/profile-manager/sso/internal/app"
+	"github.com/SergeyBogomolovv/profile-manager/sso/internal/broker"
 	"github.com/SergeyBogomolovv/profile-manager/sso/internal/config"
 	"github.com/SergeyBogomolovv/profile-manager/sso/internal/controller"
 	"github.com/SergeyBogomolovv/profile-manager/sso/internal/repo"
@@ -29,11 +31,15 @@ func main() {
 	postgres := postgres.MustNew(conf.PostgresURL)
 	defer postgres.Close()
 
+	amqpConn := rabbitmq.MustNew(conf.RabbitmqURL)
+	defer amqpConn.Close()
+	broker := broker.MustNew(amqpConn)
+
 	userRepo := repo.NewUserRepo(postgres)
 	tokenRepo := repo.NewTokensRepo(redis)
 	txManager := transaction.NewTxManager(postgres)
 
-	authSvc := service.NewAuthService(txManager, userRepo, tokenRepo, []byte(conf.JWT.SecretKey))
+	authSvc := service.NewAuthService(broker, txManager, userRepo, tokenRepo, []byte(conf.JWT.SecretKey))
 
 	logger := newLogger()
 	grpcController := controller.NewGRPCController(logger, authSvc)
@@ -47,6 +53,7 @@ func main() {
 	app.Start()
 	<-ctx.Done()
 	app.Stop()
+	broker.Close()
 }
 
 func init() {

@@ -81,7 +81,8 @@ func TestAuthService_Login(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			userRepo := mocks.NewUserRepo(t)
 			tokenRepo := mocks.NewTokenRepo(t)
-			svc := service.NewAuthService(nil, userRepo, tokenRepo, []byte("secret"))
+			broker := mocks.NewBroker(t)
+			svc := service.NewAuthService(broker, nil, userRepo, tokenRepo, []byte("secret"))
 			tc.mockBehavior(userRepo, tokenRepo, tc.args)
 			tokens, err := svc.Login(context.Background(), tc.args.email, tc.args.password)
 			if tc.wantErr != nil {
@@ -130,7 +131,8 @@ func TestAuthService_Refresh(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tokenRepo := mocks.NewTokenRepo(t)
 			secret := []byte("secret")
-			svc := service.NewAuthService(nil, nil, tokenRepo, secret)
+			broker := mocks.NewBroker(t)
+			svc := service.NewAuthService(broker, nil, nil, tokenRepo, secret)
 			tc.mockBehavior(tokenRepo, tc.args)
 			accessToken, err := svc.Refresh(context.Background(), tc.args.refreshToken)
 			if tc.wantErr != nil {
@@ -165,7 +167,8 @@ func TestAuthService_Logout(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			tokenRepo := mocks.NewTokenRepo(t)
-			svc := service.NewAuthService(nil, nil, tokenRepo, []byte("secret"))
+			broker := mocks.NewBroker(t)
+			svc := service.NewAuthService(broker, nil, nil, tokenRepo, []byte("secret"))
 			tc.mockBehavior(tokenRepo, tc.token)
 			err := svc.Logout(context.Background(), tc.token)
 			assert.ErrorIs(t, err, tc.want)

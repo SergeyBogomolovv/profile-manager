@@ -13,6 +13,7 @@ type (
 		HttpPort    int    `mapstructure:"http_port"`
 		PostgresURL string `mapstructure:"postgres_url"`
 		RedisURL    string `mapstructure:"redis_url"`
+		RabbitmqURL string `mapstructure:"rabbitmq_url"`
 		OAuth       OAuth  `mapstructure:"oauth"`
 		JWT         JWT    `mapstructure:"jwt"`
 	}
@@ -35,6 +36,7 @@ func MustLoadConfig(path string) *Config {
 	viper.BindEnv("postgres_url", "POSTGRES_URL")
 	viper.BindEnv("oauth.client_id", "OAUTH_CLIENT_ID")
 	viper.BindEnv("oauth.client_secret", "OAUTH_CLIENT_SECRET")
+	viper.BindEnv("rabbitmq_url", "RABBITMQ_URL")
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("could not read config file: %v", err)
