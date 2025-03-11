@@ -35,7 +35,7 @@ func main() {
 	profileSvc := service.NewProfileService(profileRepo)
 	grpcController := controller.NewGRPCController(logger, profileSvc)
 
-	broker := broker.MustNew(amqpConn, profileSvc)
+	broker := broker.MustNew(logger, amqpConn, profileSvc)
 
 	app := app.New(logger, conf, grpcController)
 

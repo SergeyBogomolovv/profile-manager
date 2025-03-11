@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"log/slog"
 
 	"github.com/SergeyBogomolovv/profile-manager/common/api/events"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -16,10 +17,11 @@ type ProfileService interface {
 type broker struct {
 	qName   string
 	profile ProfileService
+	logger  *slog.Logger
 	ch      *amqp.Channel
 }
 
-func MustNew(conn *amqp.Connection, profile ProfileService) *broker {
+func MustNew(logger *slog.Logger, conn *amqp.Connection, profile ProfileService) *broker {
 	ch, err := conn.Channel()
 	if err != nil {
 		log.Fatalf("failed to open a channel: %v", err)
@@ -28,7 +30,7 @@ func MustNew(conn *amqp.Connection, profile ProfileService) *broker {
 		log.Fatalf("failed to declare exchange: %v", err)
 	}
 
-	q, err := ch.QueueDeclare(events.ProfileQueue, true, false, true, false, nil)
+	q, err := ch.QueueDeclare(events.ProfileQueue, true, false, false, false, nil)
 	if err != nil {
 		log.Fatalf("failed to declare queue: %v", err)
 	}
@@ -37,7 +39,7 @@ func MustNew(conn *amqp.Connection, profile ProfileService) *broker {
 		log.Fatalf("failed to bind queue: %v", err)
 	}
 
-	return &broker{ch: ch, qName: q.Name, profile: profile}
+	return &broker{ch: ch, qName: q.Name, profile: profile, logger: logger}
 }
 
 func (b *broker) Close() error {
@@ -45,7 +47,7 @@ func (b *broker) Close() error {
 }
 
 func (b *broker) Consume(ctx context.Context) {
-	msgs, err := b.ch.Consume(b.qName, "profile-service", true, false, false, false, nil)
+	msgs, err := b.ch.Consume(b.qName, "profile-service", false, false, false, false, nil)
 	if err != nil {
 		log.Fatalf("failed to consume queue: %v", err)
 	}
@@ -59,10 +61,14 @@ func (b *broker) Consume(ctx context.Context) {
 				var data events.UserRegister
 				if err := json.Unmarshal(msg.Body, &data); err != nil {
 					msg.Nack(false, false)
+					return
 				}
 				if err := b.profile.Create(ctx, data); err != nil {
+					b.logger.Error("failed to create profile", "error", err)
 					msg.Nack(false, false)
+					return
 				}
+				msg.Ack(false)
 			}()
 		}
 	}

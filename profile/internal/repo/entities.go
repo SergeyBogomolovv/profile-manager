@@ -4,11 +4,10 @@ import (
 	"database/sql"
 
 	"github.com/SergeyBogomolovv/profile-manager/profile/internal/domain"
-	"github.com/google/uuid"
 )
 
 type Profile struct {
-	UserID    uuid.UUID      `db:"user_id"`
+	UserID    string         `db:"user_id"`
 	Username  string         `db:"username"`
 	FirstName sql.NullString `db:"first_name"`
 	LastName  sql.NullString `db:"last_name"`
