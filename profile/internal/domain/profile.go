@@ -20,6 +20,15 @@ type Profile struct {
 	Avatar    string
 }
 
+type UpdateProfileDTO struct {
+	Username  string
+	FirstName string
+	LastName  string
+	BirthDate string     `validate:"datetime=2006-01-02,omitempty"`
+	Gender    UserGender `validate:"omitempty,oneof=male female not specified"`
+}
+
 var (
 	ErrProfileNotFound = errors.New("profile not found")
+	ErrUsernameExists  = errors.New("username already exists")
 )

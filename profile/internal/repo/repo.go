@@ -50,3 +50,30 @@ func (r *profileRepo) ProfileByID(ctx context.Context, id string) (domain.Profil
 	}
 	return profile.ToDomain(), nil
 }
+
+func (r *profileRepo) Update(ctx context.Context, profile domain.Profile) error {
+	query, args := r.qb.Update("profiles").
+		Set("username", profile.Username).
+		Set("first_name", profile.FirstName).
+		Set("last_name", profile.LastName).
+		Set("birth_date", profile.BirthDate).
+		Set("gender", profile.Gender).Where(sq.Eq{"user_id": profile.UserID}).MustSql()
+	_, err := r.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to update profile: %w", err)
+	}
+	return nil
+}
+
+func (r *profileRepo) UsernameExists(ctx context.Context, username string) (bool, error) {
+	query, args := r.qb.Select("TRUE").From("profiles").Where(sq.Eq{"username": username}).MustSql()
+	var ex bool
+	err := r.db.GetContext(ctx, &ex, query, args...)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("failed to check username exists")
+	}
+	return ex, nil
+}

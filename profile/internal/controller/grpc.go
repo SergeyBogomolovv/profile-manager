@@ -15,6 +15,7 @@ import (
 
 type ProfileService interface {
 	GetProfile(ctx context.Context, userID string) (domain.Profile, error)
+	Update(ctx context.Context, userID string, dto domain.UpdateProfileDTO) (domain.Profile, error)
 }
 
 type gRPCController struct {
@@ -49,7 +50,28 @@ func (c *gRPCController) GetProfile(ctx context.Context, req *pb.GetProfileReque
 }
 
 func (c *gRPCController) UpdateProfile(ctx context.Context, req *pb.UpdateProfileRequest) (*pb.ProfileResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateProfile not implemented")
+	dto := domain.UpdateProfileDTO{
+		Username:  req.Username,
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		BirthDate: req.BirthDate,
+		Gender:    domain.UserGender(req.Gender),
+	}
+	if err := c.validate.Struct(dto); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	profile, err := c.svc.Update(ctx, req.UserId, dto)
+	if err != nil {
+		if errors.Is(err, domain.ErrProfileNotFound) {
+			return nil, status.Errorf(codes.NotFound, "profile not found")
+		}
+		if errors.Is(err, domain.ErrUsernameExists) {
+			return nil, status.Errorf(codes.AlreadyExists, "username already exists")
+		}
+		c.logger.Error("failed to update profile", "error", err)
+		return nil, status.Error(codes.Internal, "failed to update profile")
+	}
+	return domainToGRPC(profile), nil
 }
 
 func domainToGRPC(profile domain.Profile) *pb.ProfileResponse {

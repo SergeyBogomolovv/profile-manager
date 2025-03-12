@@ -39,7 +39,6 @@ func TestGRPCController_GetProfile(t *testing.T) {
 			name:         "invalid id",
 			req:          &pb.GetProfileRequest{UserId: "invalid_id"},
 			mockBehavior: func(svc *mocks.ProfileService, req *pb.GetProfileRequest) {},
-			want:         "",
 			wantErr:      true,
 		},
 	}
@@ -56,6 +55,57 @@ func TestGRPCController_GetProfile(t *testing.T) {
 			}
 			assert.NoError(t, err)
 			assert.Equal(t, got.UserId, tc.want)
+		})
+	}
+}
+
+func TestGRPCController_UpdateProfile(t *testing.T) {
+	type MockBehavior func(svc *mocks.ProfileService, req *pb.UpdateProfileRequest)
+
+	userId := uuid.NewString()
+	testCases := []struct {
+		name         string
+		mockBehavior MockBehavior
+		req          *pb.UpdateProfileRequest
+		want         string
+		wantErr      bool
+	}{
+		{
+			name:    "success",
+			req:     &pb.UpdateProfileRequest{UserId: userId, Username: "new", BirthDate: "1990-10-10"},
+			want:    "new",
+			wantErr: false,
+			mockBehavior: func(svc *mocks.ProfileService, req *pb.UpdateProfileRequest) {
+				svc.EXPECT().Update(mock.Anything, req.UserId, domain.UpdateProfileDTO{Username: req.Username, BirthDate: req.BirthDate}).
+					Return(domain.Profile{Username: req.Username, BirthDate: req.BirthDate}, nil).Once()
+			},
+		},
+		{
+			name:         "ivalid date",
+			req:          &pb.UpdateProfileRequest{BirthDate: "12312334"},
+			wantErr:      true,
+			mockBehavior: func(svc *mocks.ProfileService, req *pb.UpdateProfileRequest) {},
+		},
+		{
+			name:         "invalid gender",
+			req:          &pb.UpdateProfileRequest{Gender: "helicopter"},
+			wantErr:      true,
+			mockBehavior: func(svc *mocks.ProfileService, req *pb.UpdateProfileRequest) {},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			svc := mocks.NewProfileService(t)
+			tc.mockBehavior(svc, tc.req)
+			c := controller.NewGRPCController(slog.Default(), svc)
+			got, err := c.UpdateProfile(context.Background(), tc.req)
+			if tc.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, got.Username, tc.want)
 		})
 	}
 }

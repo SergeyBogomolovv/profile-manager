@@ -126,6 +126,110 @@ func (_c *ProfileRepo_ProfileByID_Call) RunAndReturn(run func(context.Context, s
 	return _c
 }
 
+// Update provides a mock function with given fields: ctx, profile
+func (_m *ProfileRepo) Update(ctx context.Context, profile domain.Profile) error {
+	ret := _m.Called(ctx, profile)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Update")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, domain.Profile) error); ok {
+		r0 = rf(ctx, profile)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// ProfileRepo_Update_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Update'
+type ProfileRepo_Update_Call struct {
+	*mock.Call
+}
+
+// Update is a helper method to define mock.On call
+//   - ctx context.Context
+//   - profile domain.Profile
+func (_e *ProfileRepo_Expecter) Update(ctx interface{}, profile interface{}) *ProfileRepo_Update_Call {
+	return &ProfileRepo_Update_Call{Call: _e.mock.On("Update", ctx, profile)}
+}
+
+func (_c *ProfileRepo_Update_Call) Run(run func(ctx context.Context, profile domain.Profile)) *ProfileRepo_Update_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(domain.Profile))
+	})
+	return _c
+}
+
+func (_c *ProfileRepo_Update_Call) Return(_a0 error) *ProfileRepo_Update_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *ProfileRepo_Update_Call) RunAndReturn(run func(context.Context, domain.Profile) error) *ProfileRepo_Update_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UsernameExists provides a mock function with given fields: ctx, username
+func (_m *ProfileRepo) UsernameExists(ctx context.Context, username string) (bool, error) {
+	ret := _m.Called(ctx, username)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UsernameExists")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (bool, error)); ok {
+		return rf(ctx, username)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) bool); ok {
+		r0 = rf(ctx, username)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, username)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ProfileRepo_UsernameExists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UsernameExists'
+type ProfileRepo_UsernameExists_Call struct {
+	*mock.Call
+}
+
+// UsernameExists is a helper method to define mock.On call
+//   - ctx context.Context
+//   - username string
+func (_e *ProfileRepo_Expecter) UsernameExists(ctx interface{}, username interface{}) *ProfileRepo_UsernameExists_Call {
+	return &ProfileRepo_UsernameExists_Call{Call: _e.mock.On("UsernameExists", ctx, username)}
+}
+
+func (_c *ProfileRepo_UsernameExists_Call) Run(run func(ctx context.Context, username string)) *ProfileRepo_UsernameExists_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *ProfileRepo_UsernameExists_Call) Return(_a0 bool, _a1 error) *ProfileRepo_UsernameExists_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ProfileRepo_UsernameExists_Call) RunAndReturn(run func(context.Context, string) (bool, error)) *ProfileRepo_UsernameExists_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewProfileRepo creates a new instance of ProfileRepo. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewProfileRepo(t interface {
