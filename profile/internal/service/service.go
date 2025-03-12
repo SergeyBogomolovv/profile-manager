@@ -10,6 +10,7 @@ import (
 
 type ProfileRepo interface {
 	Create(ctx context.Context, profile domain.Profile) error
+	ProfileByID(ctx context.Context, id string) (domain.Profile, error)
 }
 
 type profileService struct {
@@ -29,4 +30,8 @@ func (s *profileService) Create(ctx context.Context, user events.UserRegister) e
 		Avatar:    user.Avatar,
 	}
 	return s.repo.Create(ctx, profile)
+}
+
+func (s *profileService) GetProfile(ctx context.Context, userID string) (domain.Profile, error) {
+	return s.repo.ProfileByID(ctx, userID)
 }

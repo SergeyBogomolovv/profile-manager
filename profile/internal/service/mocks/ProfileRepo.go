@@ -69,6 +69,63 @@ func (_c *ProfileRepo_Create_Call) RunAndReturn(run func(context.Context, domain
 	return _c
 }
 
+// ProfileByID provides a mock function with given fields: ctx, id
+func (_m *ProfileRepo) ProfileByID(ctx context.Context, id string) (domain.Profile, error) {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ProfileByID")
+	}
+
+	var r0 domain.Profile
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (domain.Profile, error)); ok {
+		return rf(ctx, id)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) domain.Profile); ok {
+		r0 = rf(ctx, id)
+	} else {
+		r0 = ret.Get(0).(domain.Profile)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ProfileRepo_ProfileByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ProfileByID'
+type ProfileRepo_ProfileByID_Call struct {
+	*mock.Call
+}
+
+// ProfileByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+func (_e *ProfileRepo_Expecter) ProfileByID(ctx interface{}, id interface{}) *ProfileRepo_ProfileByID_Call {
+	return &ProfileRepo_ProfileByID_Call{Call: _e.mock.On("ProfileByID", ctx, id)}
+}
+
+func (_c *ProfileRepo_ProfileByID_Call) Run(run func(ctx context.Context, id string)) *ProfileRepo_ProfileByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *ProfileRepo_ProfileByID_Call) Return(_a0 domain.Profile, _a1 error) *ProfileRepo_ProfileByID_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ProfileRepo_ProfileByID_Call) RunAndReturn(run func(context.Context, string) (domain.Profile, error)) *ProfileRepo_ProfileByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewProfileRepo creates a new instance of ProfileRepo. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewProfileRepo(t interface {

@@ -2,6 +2,8 @@ package repo
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
@@ -35,4 +37,16 @@ func (r *profileRepo) Create(ctx context.Context, profile domain.Profile) error 
 		return fmt.Errorf("failed to create profile: %w", err)
 	}
 	return nil
+}
+
+func (r *profileRepo) ProfileByID(ctx context.Context, id string) (domain.Profile, error) {
+	query, args := r.qb.Select("*").From("profiles").Where(sq.Eq{"user_id": id}).MustSql()
+	var profile Profile
+	if err := r.db.GetContext(ctx, &profile, query, args...); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.Profile{}, domain.ErrProfileNotFound
+		}
+		return domain.Profile{}, fmt.Errorf("failed to get profile: %w", err)
+	}
+	return profile.ToDomain(), nil
 }

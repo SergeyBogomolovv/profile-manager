@@ -1,5 +1,7 @@
 package domain
 
+import "errors"
+
 type UserGender string
 
 const (
@@ -17,3 +19,7 @@ type Profile struct {
 	Gender    UserGender
 	Avatar    string
 }
+
+var (
+	ErrProfileNotFound = errors.New("profile not found")
+)
