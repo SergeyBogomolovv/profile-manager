@@ -27,17 +27,17 @@ func TestGRPCController_GetProfile(t *testing.T) {
 	}{
 		{
 			name: "success",
-			req:  &pb.GetProfileRequest{UserId: userId},
+			req:  &pb.GetProfileRequest{},
 			mockBehavior: func(svc *mocks.ProfileService, req *pb.GetProfileRequest) {
-				svc.EXPECT().GetProfile(mock.Anything, req.UserId).
-					Return(domain.Profile{UserID: req.UserId}, nil).Once()
+				svc.EXPECT().GetProfile(mock.Anything, "UPDATE").
+					Return(domain.Profile{UserID: "UPDATE"}, nil).Once()
 			},
 			want:    userId,
 			wantErr: false,
 		},
 		{
 			name:         "invalid id",
-			req:          &pb.GetProfileRequest{UserId: "invalid_id"},
+			req:          &pb.GetProfileRequest{},
 			mockBehavior: func(svc *mocks.ProfileService, req *pb.GetProfileRequest) {},
 			wantErr:      true,
 		},
@@ -62,7 +62,7 @@ func TestGRPCController_GetProfile(t *testing.T) {
 func TestGRPCController_UpdateProfile(t *testing.T) {
 	type MockBehavior func(svc *mocks.ProfileService, req *pb.UpdateProfileRequest)
 
-	userId := uuid.NewString()
+	// userId := uuid.NewString()
 	testCases := []struct {
 		name         string
 		mockBehavior MockBehavior
@@ -72,11 +72,11 @@ func TestGRPCController_UpdateProfile(t *testing.T) {
 	}{
 		{
 			name:    "success",
-			req:     &pb.UpdateProfileRequest{UserId: userId, Username: "new", BirthDate: "1990-10-10"},
+			req:     &pb.UpdateProfileRequest{Username: "new", BirthDate: "1990-10-10"},
 			want:    "new",
 			wantErr: false,
 			mockBehavior: func(svc *mocks.ProfileService, req *pb.UpdateProfileRequest) {
-				svc.EXPECT().Update(mock.Anything, req.UserId, domain.UpdateProfileDTO{Username: req.Username, BirthDate: req.BirthDate}).
+				svc.EXPECT().Update(mock.Anything, "UPDATE", domain.UpdateProfileDTO{Username: req.Username, BirthDate: req.BirthDate}).
 					Return(domain.Profile{Username: req.Username, BirthDate: req.BirthDate}, nil).Once()
 			},
 		},

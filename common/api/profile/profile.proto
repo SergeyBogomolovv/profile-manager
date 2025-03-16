@@ -9,17 +9,14 @@ service Profile {
   rpc UpdateProfile(UpdateProfileRequest) returns (ProfileResponse);
 }
 
-message GetProfileRequest {
-  string user_id = 1;
-}
+message GetProfileRequest {}
 
 message UpdateProfileRequest {
-  string user_id = 1;
-  string username = 2;
-  string first_name = 3;
-  string last_name = 4;
-  string birth_date = 5;
-  string gender = 6;
+  string username = 1;
+  string first_name = 2;
+  string last_name = 3;
+  string birth_date = 4;
+  string gender = 5;
 }
 
 message ProfileResponse {

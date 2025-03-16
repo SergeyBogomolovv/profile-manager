@@ -7,7 +7,6 @@ require (
 	github.com/SergeyBogomolovv/profile-manager/common v0.0.0-20250309095235-b77fce1f0848
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-playground/validator/v10 v10.25.0
-	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1

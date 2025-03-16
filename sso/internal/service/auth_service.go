@@ -115,7 +115,7 @@ func (s *authService) Refresh(ctx context.Context, refreshToken string) (string,
 	if err != nil {
 		return "", fmt.Errorf("failed to get user id: %w", err)
 	}
-	accessToken, err := signJwt(userID.String(), s.jwtSecret)
+	accessToken, err := s.signJwt(userID)
 	if err != nil {
 		return "", fmt.Errorf("failed to sign access token: %w", err)
 	}

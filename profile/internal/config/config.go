@@ -10,6 +10,7 @@ type Config struct {
 	GrpcPort    int    `mapstructure:"grpc_port"`
 	PostgresURL string `mapstructure:"postgres_url"`
 	RabbitmqURL string `mapstructure:"rabbitmq_url"`
+	JwtSecret   string `mapstructure:"jwt_secret"`
 }
 
 func MustLoadConfig(path string) *Config {
@@ -17,6 +18,7 @@ func MustLoadConfig(path string) *Config {
 
 	viper.BindEnv("postgres_url", "POSTGRES_URL")
 	viper.BindEnv("rabbitmq_url", "RABBITMQ_URL")
+	viper.BindEnv("jwt_secret", "JWT_SECRET_KEY")
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("could not read config file: %v", err)

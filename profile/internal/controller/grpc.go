@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	pb "github.com/SergeyBogomolovv/profile-manager/common/api/profile"
+	"github.com/SergeyBogomolovv/profile-manager/common/auth"
 	"github.com/SergeyBogomolovv/profile-manager/profile/internal/domain"
 	"github.com/go-playground/validator/v10"
 	"google.golang.org/grpc"
@@ -35,10 +36,11 @@ func (c *gRPCController) Init(srv *grpc.Server) {
 }
 
 func (c *gRPCController) GetProfile(ctx context.Context, req *pb.GetProfileRequest) (*pb.ProfileResponse, error) {
-	if err := c.validate.Var(req.UserId, "required,uuid"); err != nil {
+	userID := auth.ExtractUserID(ctx)
+	if err := c.validate.Var(userID, "required,uuid"); err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid user id")
 	}
-	profile, err := c.svc.GetProfile(ctx, req.UserId)
+	profile, err := c.svc.GetProfile(ctx, userID)
 	if err != nil {
 		if errors.Is(err, domain.ErrProfileNotFound) {
 			return nil, status.Errorf(codes.NotFound, "profile not found")
@@ -60,7 +62,13 @@ func (c *gRPCController) UpdateProfile(ctx context.Context, req *pb.UpdateProfil
 	if err := c.validate.Struct(dto); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	profile, err := c.svc.Update(ctx, req.UserId, dto)
+
+	userID := auth.ExtractUserID(ctx)
+	if err := c.validate.Var(userID, "required,uuid"); err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid user id")
+	}
+
+	profile, err := c.svc.Update(ctx, userID, dto)
 	if err != nil {
 		if errors.Is(err, domain.ErrProfileNotFound) {
 			return nil, status.Errorf(codes.NotFound, "profile not found")

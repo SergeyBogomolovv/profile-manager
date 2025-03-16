@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/SergeyBogomolovv/profile-manager/common/auth"
 	"github.com/SergeyBogomolovv/profile-manager/sso/internal/domain"
 	"github.com/SergeyBogomolovv/profile-manager/sso/internal/service"
 	"github.com/SergeyBogomolovv/profile-manager/sso/internal/service/mocks"
@@ -139,7 +140,7 @@ func TestAuthService_Refresh(t *testing.T) {
 				assert.ErrorIs(t, err, tc.wantErr)
 				return
 			}
-			claims, err := service.VerifyJWT(accessToken, secret)
+			claims, err := auth.VerifyJWT(accessToken, secret)
 			require.NoError(t, err)
 			assert.Equal(t, claims.UserID, tc.args.userID.String())
 		})
