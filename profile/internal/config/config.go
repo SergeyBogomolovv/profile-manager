@@ -18,7 +18,7 @@ func MustLoadConfig(path string) *Config {
 
 	viper.BindEnv("postgres_url", "POSTGRES_URL")
 	viper.BindEnv("rabbitmq_url", "RABBITMQ_URL")
-	viper.BindEnv("jwt_secret", "JWT_SECRET_KEY")
+	viper.BindEnv("jwt_secret", "JWT_SECRET")
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("could not read config file: %v", err)

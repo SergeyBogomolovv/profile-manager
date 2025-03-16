@@ -39,7 +39,7 @@ func main() {
 	tokenRepo := repo.NewTokensRepo(redis)
 	txManager := transaction.NewTxManager(postgres)
 
-	authSvc := service.NewAuthService(broker, txManager, userRepo, tokenRepo, []byte(conf.JWT.SecretKey))
+	authSvc := service.NewAuthService(broker, txManager, userRepo, tokenRepo, []byte(conf.JwtSecret))
 
 	logger := newLogger()
 	grpcController := controller.NewGRPCController(logger, authSvc)
