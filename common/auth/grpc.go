@@ -10,10 +10,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const userIdKey = "user_id"
+const UserIdKey = "user_id"
 
 func ExtractUserID(ctx context.Context) string {
-	vals := metadata.ValueFromIncomingContext(ctx, userIdKey)
+	vals := metadata.ValueFromIncomingContext(ctx, UserIdKey)
 	if len(vals) == 0 {
 		return ""
 	}
@@ -42,7 +42,7 @@ func NewJwtInterceptor(secret []byte) grpc.UnaryServerInterceptor {
 			return nil, status.Error(codes.Unauthenticated, "invalid token")
 		}
 
-		md.Append("user_id", claims.UserID)
+		md.Append(UserIdKey, claims.UserID)
 		ctx = metadata.NewIncomingContext(ctx, md)
 		return handler(ctx, req)
 	}
