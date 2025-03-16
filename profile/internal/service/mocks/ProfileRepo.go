@@ -127,7 +127,7 @@ func (_c *ProfileRepo_ProfileByID_Call) RunAndReturn(run func(context.Context, s
 }
 
 // Update provides a mock function with given fields: ctx, profile
-func (_m *ProfileRepo) Update(ctx context.Context, profile domain.Profile) error {
+func (_m *ProfileRepo) Update(ctx context.Context, profile *domain.Profile) error {
 	ret := _m.Called(ctx, profile)
 
 	if len(ret) == 0 {
@@ -135,7 +135,7 @@ func (_m *ProfileRepo) Update(ctx context.Context, profile domain.Profile) error
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, domain.Profile) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.Profile) error); ok {
 		r0 = rf(ctx, profile)
 	} else {
 		r0 = ret.Error(0)
@@ -151,14 +151,14 @@ type ProfileRepo_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - profile domain.Profile
+//   - profile *domain.Profile
 func (_e *ProfileRepo_Expecter) Update(ctx interface{}, profile interface{}) *ProfileRepo_Update_Call {
 	return &ProfileRepo_Update_Call{Call: _e.mock.On("Update", ctx, profile)}
 }
 
-func (_c *ProfileRepo_Update_Call) Run(run func(ctx context.Context, profile domain.Profile)) *ProfileRepo_Update_Call {
+func (_c *ProfileRepo_Update_Call) Run(run func(ctx context.Context, profile *domain.Profile)) *ProfileRepo_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(domain.Profile))
+		run(args[0].(context.Context), args[1].(*domain.Profile))
 	})
 	return _c
 }
@@ -168,7 +168,7 @@ func (_c *ProfileRepo_Update_Call) Return(_a0 error) *ProfileRepo_Update_Call {
 	return _c
 }
 
-func (_c *ProfileRepo_Update_Call) RunAndReturn(run func(context.Context, domain.Profile) error) *ProfileRepo_Update_Call {
+func (_c *ProfileRepo_Update_Call) RunAndReturn(run func(context.Context, *domain.Profile) error) *ProfileRepo_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

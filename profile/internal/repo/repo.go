@@ -51,17 +51,22 @@ func (r *profileRepo) ProfileByID(ctx context.Context, id string) (domain.Profil
 	return profile.ToDomain(), nil
 }
 
-func (r *profileRepo) Update(ctx context.Context, profile domain.Profile) error {
-	query, args := r.qb.Update("profiles").
+func (r *profileRepo) Update(ctx context.Context, profile *domain.Profile) error {
+	q := r.qb.Update("profiles").
 		Set("username", profile.Username).
 		Set("first_name", profile.FirstName).
 		Set("last_name", profile.LastName).
-		Set("birth_date", profile.BirthDate).
-		Set("gender", profile.Gender).Where(sq.Eq{"user_id": profile.UserID}).MustSql()
-	_, err := r.db.ExecContext(ctx, query, args...)
-	if err != nil {
+		Set("gender", profile.Gender)
+
+	if profile.BirthDate != "" {
+		q = q.Set("birth_date", profile.BirthDate)
+	}
+	query, args := q.Where(sq.Eq{"user_id": profile.UserID}).Suffix("RETURNING *").MustSql()
+	var p Profile
+	if err := r.db.GetContext(ctx, &p, query, args...); err != nil {
 		return fmt.Errorf("failed to update profile: %w", err)
 	}
+	*profile = p.ToDomain()
 	return nil
 }
 

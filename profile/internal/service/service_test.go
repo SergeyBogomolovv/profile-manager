@@ -88,7 +88,7 @@ func TestProfileService_Update(t *testing.T) {
 			mockBehavior: func(profiles *mocks.ProfileRepo, args args) {
 				profiles.EXPECT().ProfileByID(mock.Anything, args.userID).Return(domain.Profile{Username: "user"}, nil)
 				profiles.EXPECT().UsernameExists(mock.Anything, args.dto.Username).Return(false, nil)
-				profiles.EXPECT().Update(mock.Anything, domain.Profile{Username: "username"}).Return(nil)
+				profiles.EXPECT().Update(mock.Anything, &domain.Profile{Username: "username"}).Return(nil)
 			},
 			want:    domain.Profile{Username: "username"},
 			wantErr: nil,

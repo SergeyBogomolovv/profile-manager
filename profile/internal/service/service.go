@@ -12,7 +12,7 @@ import (
 type ProfileRepo interface {
 	Create(ctx context.Context, profile domain.Profile) error
 	ProfileByID(ctx context.Context, id string) (domain.Profile, error)
-	Update(ctx context.Context, profile domain.Profile) error
+	Update(ctx context.Context, profile *domain.Profile) error
 	UsernameExists(ctx context.Context, username string) (bool, error)
 }
 
@@ -66,7 +66,7 @@ func (s *profileService) Update(ctx context.Context, userID string, dto domain.U
 	if dto.Gender != "" {
 		profile.Gender = domain.UserGender(dto.Gender)
 	}
-	if err := s.repo.Update(ctx, profile); err != nil {
+	if err := s.repo.Update(ctx, &profile); err != nil {
 		return domain.Profile{}, err
 	}
 	return profile, nil
