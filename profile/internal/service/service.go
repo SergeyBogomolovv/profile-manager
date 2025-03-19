@@ -69,7 +69,7 @@ func (s *profileService) Update(ctx context.Context, userID string, dto domain.U
 		profile.Gender = domain.UserGender(dto.Gender)
 	}
 	if dto.Avatar != nil {
-		profile.Avatar, err = s.updateAvatar(ctx, profile, dto.Avatar)
+		profile.Avatar, err = s.images.UploadAvatar(ctx, profile.UserID, dto.Avatar)
 		if err != nil {
 			return domain.Profile{}, err
 		}
@@ -79,15 +79,6 @@ func (s *profileService) Update(ctx context.Context, userID string, dto domain.U
 		return domain.Profile{}, err
 	}
 	return profile, nil
-}
-
-func (s *profileService) updateAvatar(ctx context.Context, profile domain.Profile, image []byte) (string, error) {
-	if profile.Avatar != "" {
-		if err := s.images.DeleteAvatar(ctx, profile.UserID); err != nil {
-			return "", fmt.Errorf("failed to delete avatar: %w", err)
-		}
-	}
-	return s.images.UploadAvatar(ctx, profile.UserID, image)
 }
 
 func (s *profileService) checkUsername(ctx context.Context, username string) error {
