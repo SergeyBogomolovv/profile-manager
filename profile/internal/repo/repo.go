@@ -56,7 +56,8 @@ func (r *profileRepo) Update(ctx context.Context, profile *domain.Profile) error
 		Set("username", profile.Username).
 		Set("first_name", profile.FirstName).
 		Set("last_name", profile.LastName).
-		Set("gender", profile.Gender)
+		Set("gender", profile.Gender).
+		Set("avatar", profile.Avatar)
 
 	if profile.BirthDate != "" {
 		q = q.Set("birth_date", profile.BirthDate)

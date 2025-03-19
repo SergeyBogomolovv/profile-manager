@@ -17,6 +17,7 @@ message UpdateProfileRequest {
   string last_name = 3;
   string birth_date = 4;
   string gender = 5;
+  bytes avatar = 6;
 }
 
 message ProfileResponse {

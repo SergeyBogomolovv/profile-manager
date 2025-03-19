@@ -58,6 +58,7 @@ func (c *gRPCController) UpdateProfile(ctx context.Context, req *pb.UpdateProfil
 		LastName:  req.LastName,
 		BirthDate: req.BirthDate,
 		Gender:    domain.UserGender(req.Gender),
+		Avatar:    req.Avatar,
 	}
 	if err := c.validate.Struct(dto); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())

@@ -9,6 +9,11 @@ import (
 	"github.com/SergeyBogomolovv/profile-manager/profile/internal/domain"
 )
 
+type ImageRepo interface {
+	UploadAvatar(ctx context.Context, userID string, body []byte) (string, error)
+	DeleteAvatar(ctx context.Context, url string) error
+}
+
 type ProfileRepo interface {
 	Create(ctx context.Context, profile domain.Profile) error
 	ProfileByID(ctx context.Context, id string) (domain.Profile, error)
@@ -17,11 +22,12 @@ type ProfileRepo interface {
 }
 
 type profileService struct {
-	repo ProfileRepo
+	repo   ProfileRepo
+	images ImageRepo
 }
 
-func NewProfileService(repo ProfileRepo) *profileService {
-	return &profileService{repo: repo}
+func NewProfileService(repo ProfileRepo, images ImageRepo) *profileService {
+	return &profileService{repo: repo, images: images}
 }
 
 func (s *profileService) Create(ctx context.Context, user events.UserRegister) error {
@@ -45,12 +51,8 @@ func (s *profileService) Update(ctx context.Context, userID string, dto domain.U
 		return domain.Profile{}, fmt.Errorf("failed to get profile: %w", err)
 	}
 	if dto.Username != "" && profile.Username != dto.Username {
-		ex, err := s.repo.UsernameExists(ctx, dto.Username)
-		if err != nil {
-			return domain.Profile{}, fmt.Errorf("failed to check username: %w", err)
-		}
-		if ex {
-			return domain.Profile{}, domain.ErrUsernameExists
+		if err := s.checkUsername(ctx, dto.Username); err != nil {
+			return domain.Profile{}, err
 		}
 		profile.Username = dto.Username
 	}
@@ -66,8 +68,35 @@ func (s *profileService) Update(ctx context.Context, userID string, dto domain.U
 	if dto.Gender != "" {
 		profile.Gender = domain.UserGender(dto.Gender)
 	}
+	if dto.Avatar != nil {
+		profile.Avatar, err = s.updateAvatar(ctx, profile, dto.Avatar)
+		if err != nil {
+			return domain.Profile{}, err
+		}
+	}
+
 	if err := s.repo.Update(ctx, &profile); err != nil {
 		return domain.Profile{}, err
 	}
 	return profile, nil
+}
+
+func (s *profileService) updateAvatar(ctx context.Context, profile domain.Profile, image []byte) (string, error) {
+	if profile.Avatar != "" {
+		if err := s.images.DeleteAvatar(ctx, profile.UserID); err != nil {
+			return "", fmt.Errorf("failed to delete avatar: %w", err)
+		}
+	}
+	return s.images.UploadAvatar(ctx, profile.UserID, image)
+}
+
+func (s *profileService) checkUsername(ctx context.Context, username string) error {
+	ex, err := s.repo.UsernameExists(ctx, username)
+	if err != nil {
+		return fmt.Errorf("failed to check username: %w", err)
+	}
+	if ex {
+		return domain.ErrUsernameExists
+	}
+	return nil
 }

@@ -26,6 +26,7 @@ type UpdateProfileDTO struct {
 	LastName  string
 	BirthDate string     `validate:"omitempty,datetime=2006-01-02"`
 	Gender    UserGender `validate:"omitempty,oneof=male female"`
+	Avatar    []byte
 }
 
 var (

@@ -31,8 +31,9 @@ func main() {
 
 	logger := newLogger()
 
+	imageRepo := repo.MustNewImageRepo(conf.S3)
 	profileRepo := repo.NewProfileRepo(postgres)
-	profileSvc := service.NewProfileService(profileRepo)
+	profileSvc := service.NewProfileService(profileRepo, imageRepo)
 	grpcController := controller.NewGRPCController(logger, profileSvc)
 
 	broker := broker.MustNew(logger, amqpConn, profileSvc)

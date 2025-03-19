@@ -55,7 +55,7 @@ func TestProfileService_Create(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			profiles := mocks.NewProfileRepo(t)
-			svc := service.NewProfileService(profiles)
+			svc := service.NewProfileService(profiles, nil)
 			tc.mockBehavior(profiles, tc.data)
 			err := svc.Create(context.Background(), tc.data)
 			assert.ErrorIs(t, err, tc.want)
@@ -69,7 +69,7 @@ func TestProfileService_Update(t *testing.T) {
 		dto    domain.UpdateProfileDTO
 	}
 
-	type MockBehavior func(profiles *mocks.ProfileRepo, args args)
+	type MockBehavior func(profiles *mocks.ProfileRepo, images *mocks.ImageRepo, args args)
 	testCases := []struct {
 		name         string
 		args         args
@@ -85,7 +85,7 @@ func TestProfileService_Update(t *testing.T) {
 					Username: "username",
 				},
 			},
-			mockBehavior: func(profiles *mocks.ProfileRepo, args args) {
+			mockBehavior: func(profiles *mocks.ProfileRepo, images *mocks.ImageRepo, args args) {
 				profiles.EXPECT().ProfileByID(mock.Anything, args.userID).Return(domain.Profile{Username: "user"}, nil)
 				profiles.EXPECT().UsernameExists(mock.Anything, args.dto.Username).Return(false, nil)
 				profiles.EXPECT().Update(mock.Anything, &domain.Profile{Username: "username"}).Return(nil)
@@ -98,7 +98,7 @@ func TestProfileService_Update(t *testing.T) {
 			args: args{
 				userID: "not valid",
 			},
-			mockBehavior: func(profiles *mocks.ProfileRepo, args args) {
+			mockBehavior: func(profiles *mocks.ProfileRepo, images *mocks.ImageRepo, args args) {
 				profiles.EXPECT().ProfileByID(mock.Anything, args.userID).Return(domain.Profile{}, domain.ErrProfileNotFound)
 			},
 			want:    domain.Profile{},
@@ -112,27 +112,68 @@ func TestProfileService_Update(t *testing.T) {
 					Username: "new user",
 				},
 			},
-			mockBehavior: func(profiles *mocks.ProfileRepo, args args) {
+			mockBehavior: func(profiles *mocks.ProfileRepo, images *mocks.ImageRepo, args args) {
 				profiles.EXPECT().ProfileByID(mock.Anything, args.userID).Return(domain.Profile{Username: "user"}, nil)
 				profiles.EXPECT().UsernameExists(mock.Anything, args.dto.Username).Return(true, nil)
 			},
 			want:    domain.Profile{},
 			wantErr: domain.ErrUsernameExists,
 		},
+		{
+			name: "with image",
+			args: args{
+				userID: "id",
+				dto: domain.UpdateProfileDTO{
+					Avatar: []byte("image"),
+				},
+			},
+			mockBehavior: func(profiles *mocks.ProfileRepo, images *mocks.ImageRepo, args args) {
+				user := domain.Profile{UserID: args.userID}
+				profiles.EXPECT().ProfileByID(mock.Anything, args.userID).Return(user, nil)
+				images.EXPECT().UploadAvatar(mock.Anything, args.userID, args.dto.Avatar).Return("url", nil)
+
+				profiles.EXPECT().
+					Update(mock.Anything, &domain.Profile{
+						UserID: args.userID,
+						Avatar: "url",
+					}).
+					Return(nil)
+			},
+			want: domain.Profile{UserID: "id", Avatar: "url"},
+		},
+		{
+			name: "should replace image",
+			args: args{
+				userID: "id",
+				dto: domain.UpdateProfileDTO{
+					Avatar: []byte("image"),
+				},
+			},
+			mockBehavior: func(profiles *mocks.ProfileRepo, images *mocks.ImageRepo, args args) {
+				profiles.EXPECT().ProfileByID(mock.Anything, args.userID).Return(
+					domain.Profile{UserID: args.userID, Avatar: "old_url"}, nil,
+				)
+				images.EXPECT().DeleteAvatar(mock.Anything, args.userID).Return(nil)
+				images.EXPECT().UploadAvatar(mock.Anything, args.userID, args.dto.Avatar).Return("url", nil)
+				profiles.EXPECT().Update(mock.Anything, &domain.Profile{UserID: args.userID, Avatar: "url"}).Return(nil)
+			},
+			want: domain.Profile{UserID: "id", Avatar: "url"},
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			profiles := mocks.NewProfileRepo(t)
-			svc := service.NewProfileService(profiles)
-			tc.mockBehavior(profiles, tc.args)
+			images := mocks.NewImageRepo(t)
+			svc := service.NewProfileService(profiles, images)
+			tc.mockBehavior(profiles, images, tc.args)
 			got, err := svc.Update(context.Background(), tc.args.userID, tc.args.dto)
 			if tc.wantErr != nil {
 				assert.ErrorIs(t, err, tc.wantErr)
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, got, tc.want)
+			assert.Equal(t, tc.want, got)
 		})
 	}
 }
