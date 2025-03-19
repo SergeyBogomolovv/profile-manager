@@ -1,0 +1,2 @@
+CREATE DATABASE profile;
+CREATE DATABASE sso;
