@@ -1,13 +1,13 @@
-name: profile
+name: notification
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'profile/**'
+      - 'notification/**'
       - 'common/**'
-      - '.github/workflows/profile.yml'
+      - '.github/workflows/notification.yml'
 
 jobs:
   build:
@@ -39,6 +39,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: grekas/profile-manager-profile:latest
-          context: ./profile
-          file: ./profile/Dockerfile
+          tags: grekas/profile-manager-notification:latest
+          context: ./notification
+          file: ./notification/Dockerfile
