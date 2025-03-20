@@ -14,3 +14,8 @@ const LoginTopic = "login"
 const (
 	NotificationLoginQueue = "notification_login_queue"
 )
+
+const (
+	LoginTypeCredentials = "credentials"
+	LoginTypeGoogle      = "google"
+)
