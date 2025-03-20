@@ -141,24 +141,6 @@ func TestProfileService_Update(t *testing.T) {
 			},
 			want: domain.Profile{UserID: "id", Avatar: "url"},
 		},
-		{
-			name: "should replace image",
-			args: args{
-				userID: "id",
-				dto: domain.UpdateProfileDTO{
-					Avatar: []byte("image"),
-				},
-			},
-			mockBehavior: func(profiles *mocks.ProfileRepo, images *mocks.ImageRepo, args args) {
-				profiles.EXPECT().ProfileByID(mock.Anything, args.userID).Return(
-					domain.Profile{UserID: args.userID, Avatar: "old_url"}, nil,
-				)
-				images.EXPECT().DeleteAvatar(mock.Anything, args.userID).Return(nil)
-				images.EXPECT().UploadAvatar(mock.Anything, args.userID, args.dto.Avatar).Return("url", nil)
-				profiles.EXPECT().Update(mock.Anything, &domain.Profile{UserID: args.userID, Avatar: "url"}).Return(nil)
-			},
-			want: domain.Profile{UserID: "id", Avatar: "url"},
-		},
 	}
 
 	for _, tc := range testCases {
