@@ -23,9 +23,9 @@ func (_m *AuthService) EXPECT() *AuthService_Expecter {
 	return &AuthService_Expecter{mock: &_m.Mock}
 }
 
-// Login provides a mock function with given fields: ctx, email, password
-func (_m *AuthService) Login(ctx context.Context, email string, password string) (domain.Tokens, error) {
-	ret := _m.Called(ctx, email, password)
+// Login provides a mock function with given fields: ctx, email, password, ip
+func (_m *AuthService) Login(ctx context.Context, email string, password string, ip string) (domain.Tokens, error) {
+	ret := _m.Called(ctx, email, password, ip)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Login")
@@ -33,17 +33,17 @@ func (_m *AuthService) Login(ctx context.Context, email string, password string)
 
 	var r0 domain.Tokens
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (domain.Tokens, error)); ok {
-		return rf(ctx, email, password)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (domain.Tokens, error)); ok {
+		return rf(ctx, email, password, ip)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) domain.Tokens); ok {
-		r0 = rf(ctx, email, password)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) domain.Tokens); ok {
+		r0 = rf(ctx, email, password, ip)
 	} else {
 		r0 = ret.Get(0).(domain.Tokens)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, email, password)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, email, password, ip)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -60,13 +60,14 @@ type AuthService_Login_Call struct {
 //   - ctx context.Context
 //   - email string
 //   - password string
-func (_e *AuthService_Expecter) Login(ctx interface{}, email interface{}, password interface{}) *AuthService_Login_Call {
-	return &AuthService_Login_Call{Call: _e.mock.On("Login", ctx, email, password)}
+//   - ip string
+func (_e *AuthService_Expecter) Login(ctx interface{}, email interface{}, password interface{}, ip interface{}) *AuthService_Login_Call {
+	return &AuthService_Login_Call{Call: _e.mock.On("Login", ctx, email, password, ip)}
 }
 
-func (_c *AuthService_Login_Call) Run(run func(ctx context.Context, email string, password string)) *AuthService_Login_Call {
+func (_c *AuthService_Login_Call) Run(run func(ctx context.Context, email string, password string, ip string)) *AuthService_Login_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
 	})
 	return _c
 }
@@ -76,7 +77,7 @@ func (_c *AuthService_Login_Call) Return(_a0 domain.Tokens, _a1 error) *AuthServ
 	return _c
 }
 
-func (_c *AuthService_Login_Call) RunAndReturn(run func(context.Context, string, string) (domain.Tokens, error)) *AuthService_Login_Call {
+func (_c *AuthService_Login_Call) RunAndReturn(run func(context.Context, string, string, string) (domain.Tokens, error)) *AuthService_Login_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -18,7 +18,7 @@ func MustNew(conn *amqp.Connection) *broker {
 	if err != nil {
 		log.Fatalf("failed to open a channel: %v", err)
 	}
-	if err := ch.ExchangeDeclare(events.RegisterExchange, "fanout", true, false, false, false, nil); err != nil {
+	if err := ch.ExchangeDeclare(events.UserExchange, "topic", true, false, false, false, nil); err != nil {
 		log.Fatalf("failed to declare exchange: %v", err)
 	}
 	return &broker{ch: ch}
@@ -37,5 +37,17 @@ func (b *broker) PublishUserRegister(user events.UserRegister) error {
 		ContentType: "application/json",
 		Body:        data,
 	}
-	return b.ch.Publish(events.RegisterExchange, "", false, false, msg)
+	return b.ch.Publish(events.UserExchange, events.RegisterTopic, false, false, msg)
+}
+
+func (b *broker) PublishUserLogin(user events.UserLogin) error {
+	data, err := json.Marshal(user)
+	if err != nil {
+		return fmt.Errorf("failed to marshal user: %w", err)
+	}
+	msg := amqp.Publishing{
+		ContentType: "application/json",
+		Body:        data,
+	}
+	return b.ch.Publish(events.UserExchange, events.LoginTopic, false, false, msg)
 }

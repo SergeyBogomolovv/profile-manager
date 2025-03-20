@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/SergeyBogomolovv/profile-manager/common/api/events"
 	"github.com/SergeyBogomolovv/profile-manager/common/auth"
 	"github.com/SergeyBogomolovv/profile-manager/sso/internal/domain"
 	"github.com/SergeyBogomolovv/profile-manager/sso/internal/service"
@@ -21,7 +22,7 @@ func TestAuthService_Login(t *testing.T) {
 		password string
 	}
 
-	type MockBehavior func(users *mocks.UserRepo, tokens *mocks.TokenRepo, args args)
+	type MockBehavior func(users *mocks.UserRepo, tokens *mocks.TokenRepo, broker *mocks.Broker, args args)
 
 	testCases := []struct {
 		name         string
@@ -33,7 +34,7 @@ func TestAuthService_Login(t *testing.T) {
 		{
 			name: "success",
 			args: args{email: "email@email.com", password: "password"},
-			mockBehavior: func(users *mocks.UserRepo, tokens *mocks.TokenRepo, args args) {
+			mockBehavior: func(users *mocks.UserRepo, tokens *mocks.TokenRepo, broker *mocks.Broker, args args) {
 				hashedPassword, err := bcrypt.GenerateFromPassword([]byte(args.password), bcrypt.DefaultCost)
 				require.NoError(t, err)
 				userID := uuid.New()
@@ -42,6 +43,12 @@ func TestAuthService_Login(t *testing.T) {
 					AccountByID(mock.Anything, userID, domain.AccountTypeCredentials).
 					Return(domain.Account{Password: hashedPassword}, nil)
 				tokens.EXPECT().Create(mock.Anything, userID).Return("token", nil)
+				broker.EXPECT().PublishUserLogin(mock.MatchedBy(func(event events.UserLogin) bool {
+					return event.ID == userID.String() &&
+						event.IP == "1.1.1.1" &&
+						event.Type == events.LoginTypeCredentials &&
+						!event.Time.IsZero()
+				})).Return(nil)
 			},
 			want:    domain.Tokens{RefreshToken: "token"},
 			wantErr: nil,
@@ -49,7 +56,7 @@ func TestAuthService_Login(t *testing.T) {
 		{
 			name: "account not exists",
 			args: args{email: "email@email.com", password: "password"},
-			mockBehavior: func(users *mocks.UserRepo, tokens *mocks.TokenRepo, args args) {
+			mockBehavior: func(users *mocks.UserRepo, tokens *mocks.TokenRepo, broker *mocks.Broker, args args) {
 				userID := uuid.New()
 				users.EXPECT().GetByEmail(mock.Anything, args.email).Return(domain.User{ID: userID}, nil)
 				users.EXPECT().AccountByID(mock.Anything, userID, domain.AccountTypeCredentials).Return(domain.Account{}, domain.ErrAccountNotFound)
@@ -59,7 +66,7 @@ func TestAuthService_Login(t *testing.T) {
 		{
 			name: "user not exists",
 			args: args{email: "email@email.com", password: "password"},
-			mockBehavior: func(users *mocks.UserRepo, tokens *mocks.TokenRepo, args args) {
+			mockBehavior: func(users *mocks.UserRepo, tokens *mocks.TokenRepo, broker *mocks.Broker, args args) {
 				users.EXPECT().GetByEmail(mock.Anything, args.email).Return(domain.User{}, domain.ErrUserNotFound)
 			},
 			wantErr: domain.ErrInvalidCredentials,
@@ -67,7 +74,7 @@ func TestAuthService_Login(t *testing.T) {
 		{
 			name: "wrong password",
 			args: args{email: "email@email.com", password: "password"},
-			mockBehavior: func(users *mocks.UserRepo, tokens *mocks.TokenRepo, args args) {
+			mockBehavior: func(users *mocks.UserRepo, tokens *mocks.TokenRepo, broker *mocks.Broker, args args) {
 				userID := uuid.New()
 				users.EXPECT().GetByEmail(mock.Anything, args.email).Return(domain.User{ID: userID}, nil)
 				users.EXPECT().
@@ -84,8 +91,8 @@ func TestAuthService_Login(t *testing.T) {
 			tokenRepo := mocks.NewTokenRepo(t)
 			broker := mocks.NewBroker(t)
 			svc := service.NewAuthService(broker, nil, userRepo, tokenRepo, []byte("secret"))
-			tc.mockBehavior(userRepo, tokenRepo, tc.args)
-			tokens, err := svc.Login(context.Background(), tc.args.email, tc.args.password)
+			tc.mockBehavior(userRepo, tokenRepo, broker, tc.args)
+			tokens, err := svc.Login(context.Background(), tc.args.email, tc.args.password, "1.1.1.1")
 			if tc.wantErr != nil {
 				assert.ErrorIs(t, err, tc.wantErr)
 				return

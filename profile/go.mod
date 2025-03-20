@@ -4,7 +4,7 @@ go 1.24.1
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/SergeyBogomolovv/profile-manager/common v0.0.0-20250319094703-97f45190dec1
+	github.com/SergeyBogomolovv/profile-manager/common v0.0.0-20250320081737-bcaa6fcf106a
 	github.com/aws/aws-sdk-go-v2 v1.36.3
 	github.com/aws/aws-sdk-go-v2/config v1.29.9
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.62

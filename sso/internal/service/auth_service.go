@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/SergeyBogomolovv/profile-manager/common/api/events"
 	"github.com/SergeyBogomolovv/profile-manager/common/transaction"
@@ -14,6 +15,7 @@ import (
 
 type Broker interface {
 	PublishUserRegister(user events.UserRegister) error
+	PublishUserLogin(user events.UserLogin) error
 }
 
 type UserRepo interface {
@@ -83,7 +85,7 @@ func (s *authService) Register(ctx context.Context, email, password string) (str
 	return userID.String(), nil
 }
 
-func (s *authService) Login(ctx context.Context, email, password string) (domain.Tokens, error) {
+func (s *authService) Login(ctx context.Context, email, password, ip string) (domain.Tokens, error) {
 	// Get user
 	user, err := s.users.GetByEmail(ctx, email)
 	if err != nil {
@@ -102,12 +104,25 @@ func (s *authService) Login(ctx context.Context, email, password string) (domain
 		return domain.Tokens{}, fmt.Errorf("failed to get account: %w", err)
 	}
 
-	// Compare password
 	if err := comparePassword(password, account.Password); err != nil {
 		return domain.Tokens{}, domain.ErrInvalidCredentials
 	}
 
-	return s.createTokens(ctx, user.ID)
+	tokens, err := s.createTokens(ctx, user.ID)
+	if err != nil {
+		return domain.Tokens{}, err
+	}
+
+	if err := s.broker.PublishUserLogin(events.UserLogin{
+		ID:   user.ID.String(),
+		IP:   ip,
+		Time: time.Now(),
+		Type: events.LoginTypeCredentials,
+	}); err != nil {
+		return domain.Tokens{}, fmt.Errorf("failed to publish user login: %w", err)
+	}
+
+	return tokens, nil
 }
 
 func (s *authService) Refresh(ctx context.Context, refreshToken string) (string, error) {

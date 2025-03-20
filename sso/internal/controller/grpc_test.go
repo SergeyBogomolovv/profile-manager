@@ -2,6 +2,7 @@ package controller_test
 
 import (
 	"context"
+	"net"
 	"testing"
 
 	pb "github.com/SergeyBogomolovv/profile-manager/common/api/sso"
@@ -11,6 +12,7 @@ import (
 	"github.com/SergeyBogomolovv/profile-manager/sso/internal/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"google.golang.org/grpc/peer"
 )
 
 func TestGRPCController_Register(t *testing.T) {
@@ -95,7 +97,7 @@ func TestGRPCController_Login(t *testing.T) {
 			name: "success",
 			args: args{req: &pb.LoginRequest{Email: "xLb3u@example.com", Password: "password"}},
 			mockBehavior: func(svc *mocks.AuthService, req *pb.LoginRequest) {
-				svc.EXPECT().Login(mock.Anything, req.Email, req.Password).Return(domain.Tokens{AccessToken: "access_token", RefreshToken: "refresh_token"}, nil).Once()
+				svc.EXPECT().Login(mock.Anything, req.Email, req.Password, mock.AnythingOfType("string")).Return(domain.Tokens{AccessToken: "access_token", RefreshToken: "refresh_token"}, nil).Once()
 			},
 			want:    &pb.TokensResponse{AccessToken: "access_token", RefreshToken: "refresh_token"},
 			wantErr: false,
@@ -111,7 +113,7 @@ func TestGRPCController_Login(t *testing.T) {
 			name: "invalid credentials",
 			args: args{req: &pb.LoginRequest{Email: "xLb3u@example.com", Password: "invalid-password"}},
 			mockBehavior: func(svc *mocks.AuthService, req *pb.LoginRequest) {
-				svc.EXPECT().Login(mock.Anything, req.Email, req.Password).Return(domain.Tokens{}, domain.ErrInvalidCredentials).Once()
+				svc.EXPECT().Login(mock.Anything, req.Email, req.Password, mock.AnythingOfType("string")).Return(domain.Tokens{}, domain.ErrInvalidCredentials).Once()
 			},
 			want:    nil,
 			wantErr: true,
@@ -122,7 +124,8 @@ func TestGRPCController_Login(t *testing.T) {
 			svc := mocks.NewAuthService(t)
 			controller := controller.NewGRPCController(testutils.NewTestLogger(), svc)
 			tc.mockBehavior(svc, tc.args.req)
-			got, err := controller.Login(context.Background(), tc.args.req)
+			ctx := peer.NewContext(context.Background(), &peer.Peer{Addr: &net.UnixAddr{Name: "127.0.0.1:8080", Net: "tcp"}})
+			got, err := controller.Login(ctx, tc.args.req)
 			if tc.wantErr {
 				assert.Error(t, err)
 				return

@@ -26,16 +26,16 @@ func MustNew(logger *slog.Logger, conn *amqp.Connection, profile ProfileService)
 	if err != nil {
 		log.Fatalf("failed to open a channel: %v", err)
 	}
-	if err := ch.ExchangeDeclare(events.RegisterExchange, "fanout", true, false, false, false, nil); err != nil {
+	if err := ch.ExchangeDeclare(events.UserExchange, "topic", true, false, false, false, nil); err != nil {
 		log.Fatalf("failed to declare exchange: %v", err)
 	}
 
-	q, err := ch.QueueDeclare(events.ProfileQueue, true, false, false, false, nil)
+	q, err := ch.QueueDeclare(events.ProfileRegisterQueue, true, false, false, false, nil)
 	if err != nil {
 		log.Fatalf("failed to declare queue: %v", err)
 	}
 
-	if err := ch.QueueBind(q.Name, "", events.RegisterExchange, false, nil); err != nil {
+	if err := ch.QueueBind(q.Name, events.RegisterTopic, events.UserExchange, false, nil); err != nil {
 		log.Fatalf("failed to bind queue: %v", err)
 	}
 

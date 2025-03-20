@@ -10,12 +10,13 @@ import (
 	"github.com/go-playground/validator/v10"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/peer"
 	status "google.golang.org/grpc/status"
 )
 
 type AuthService interface {
 	Register(ctx context.Context, email, password string) (string, error)
-	Login(ctx context.Context, email, password string) (domain.Tokens, error)
+	Login(ctx context.Context, email, password, ip string) (domain.Tokens, error)
 	Refresh(ctx context.Context, refreshToken string) (string, error)
 	Logout(ctx context.Context, refreshToken string) error
 }
@@ -57,12 +58,16 @@ func (c *gRPCController) Register(ctx context.Context, req *pb.RegisterRequest) 
 func (c *gRPCController) Login(ctx context.Context, req *pb.LoginRequest) (*pb.TokensResponse, error) {
 	const op = "grpc.Login"
 	logger := c.logger.With(slog.String("op", op), slog.String("email", req.Email))
+	p, ok := peer.FromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.InvalidArgument, "failed to get peer from context")
+	}
 
 	if err := c.validate.Var(req.Email, "required,email"); err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid email")
 	}
 
-	tokens, err := c.svc.Login(ctx, req.Email, req.Password)
+	tokens, err := c.svc.Login(ctx, req.Email, req.Password, p.Addr.String())
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidCredentials) {
 			return nil, status.Error(codes.Unauthenticated, "invalid credentials")
