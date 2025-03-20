@@ -7,10 +7,9 @@ type UserRegister struct {
 	Avatar string `json:"avatar,omitempty"`
 }
 
-const (
-	RegisterExchange = "register_exchange"
-)
+const RegisterTopic = "register"
 
 const (
-	ProfileQueue = "profile_queue"
+	ProfileRegisterQueue      = "profile_register_queue"
+	NotificationRegisterQueue = "notification_register_queue"
 )
