@@ -7,8 +7,17 @@ import (
 )
 
 type Config struct {
-	PostgresURL string `mapstructure:"postgres_url"`
-	RabbitmqURL string `mapstructure:"rabbitmq_url"`
+	PostgresURL   string `mapstructure:"postgres_url"`
+	RabbitmqURL   string `mapstructure:"rabbitmq_url"`
+	TelegramToken string `mapstructure:"telegram_token"`
+	SMTP          SMTP   `mapstructure:"smtp"`
+}
+
+type SMTP struct {
+	Host string `mapstructure:"host"`
+	Port int    `mapstructure:"port"`
+	User string `mapstructure:"user"`
+	Pass string `mapstructure:"password"`
 }
 
 func MustLoadConfig(path string) *Config {
@@ -16,6 +25,8 @@ func MustLoadConfig(path string) *Config {
 
 	viper.BindEnv("postgres_url", "POSTGRES_URL")
 	viper.BindEnv("rabbitmq_url", "RABBITMQ_URL")
+	viper.BindEnv("telegram_token", "TELEGRAM_TOKEN")
+	viper.BindEnv("smtp.password", "SMTP_PASSWORD")
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("could not read config file: %v", err)

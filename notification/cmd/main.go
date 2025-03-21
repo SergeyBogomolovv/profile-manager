@@ -11,7 +11,11 @@ import (
 	"github.com/SergeyBogomolovv/profile-manager/common/postgres"
 	"github.com/SergeyBogomolovv/profile-manager/common/rabbitmq"
 	"github.com/SergeyBogomolovv/profile-manager/notification/internal/app"
+	"github.com/SergeyBogomolovv/profile-manager/notification/internal/broker"
 	"github.com/SergeyBogomolovv/profile-manager/notification/internal/config"
+	"github.com/SergeyBogomolovv/profile-manager/notification/internal/mailer"
+	"github.com/SergeyBogomolovv/profile-manager/notification/internal/repo"
+	"github.com/SergeyBogomolovv/profile-manager/notification/internal/service"
 	"github.com/joho/godotenv"
 )
 
@@ -27,13 +31,20 @@ func main() {
 
 	logger := newLogger()
 
+	mailer := mailer.New(conf.SMTP)
+	userRepo := repo.New(postgres)
+	svc := service.New(mailer, userRepo)
+	broker := broker.MustNew(logger, amqpConn, svc)
+
 	app := app.New(logger, conf)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+	broker.Consume(ctx)
 	app.Start()
 	<-ctx.Done()
 	app.Stop()
+	broker.Close()
 }
 
 func init() {

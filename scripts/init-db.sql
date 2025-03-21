@@ -1,2 +1,3 @@
 CREATE DATABASE profile;
 CREATE DATABASE sso;
+CREATE DATABASE notification;
