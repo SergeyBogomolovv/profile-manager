@@ -20,7 +20,7 @@ func ExtractUserID(ctx context.Context) string {
 	return vals[0]
 }
 
-func NewJwtInterceptor(secret []byte) grpc.UnaryServerInterceptor {
+func JwtInterceptor(secret []byte) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
