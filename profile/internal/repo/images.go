@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/SergeyBogomolovv/profile-manager/common/e"
 	conf "github.com/SergeyBogomolovv/profile-manager/profile/internal/config"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -49,7 +50,7 @@ func (u *imageRepo) UploadAvatar(ctx context.Context, userID string, body []byte
 		ChecksumSHA256: aws.String(sha256Hex),
 	})
 	if err != nil {
-		return "", fmt.Errorf("failed to upload avatar: %w", err)
+		return "", e.Wrap(err, "failed to upload avatar")
 	}
 	return result.Location, nil
 }
@@ -59,7 +60,7 @@ func (u *imageRepo) DeleteAvatar(ctx context.Context, userID string) error {
 		Bucket: aws.String(u.bucket),
 		Key:    aws.String(avatarKey(userID)),
 	})
-	return err
+	return e.WrapIfErr(err, "failed to delete avatar")
 }
 
 const folder = "avatars"

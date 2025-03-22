@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/SergeyBogomolovv/profile-manager/common/api/events"
@@ -48,7 +47,7 @@ func (s *profileService) GetProfile(ctx context.Context, userID string) (domain.
 func (s *profileService) Update(ctx context.Context, userID string, dto domain.UpdateProfileDTO) (domain.Profile, error) {
 	profile, err := s.repo.ProfileByID(ctx, userID)
 	if err != nil {
-		return domain.Profile{}, fmt.Errorf("failed to get profile: %w", err)
+		return domain.Profile{}, err
 	}
 	if dto.Username != "" && profile.Username != dto.Username {
 		if err := s.checkUsername(ctx, dto.Username); err != nil {
@@ -84,7 +83,7 @@ func (s *profileService) Update(ctx context.Context, userID string, dto domain.U
 func (s *profileService) checkUsername(ctx context.Context, username string) error {
 	ex, err := s.repo.UsernameExists(ctx, username)
 	if err != nil {
-		return fmt.Errorf("failed to check username: %w", err)
+		return err
 	}
 	if ex {
 		return domain.ErrUsernameExists

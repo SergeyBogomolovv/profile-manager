@@ -7,6 +7,7 @@ import (
 	"log/slog"
 
 	"github.com/SergeyBogomolovv/profile-manager/common/api/events"
+	"github.com/SergeyBogomolovv/profile-manager/common/logger"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -63,7 +64,7 @@ func (b *broker) consumeLogin(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		default:
-			go b.handleLogin(ctx, msg)
+			go b.handleLogin(logger.Inject(ctx, b.logger), msg)
 		}
 	}
 }
@@ -75,7 +76,7 @@ func (b *broker) handleLogin(ctx context.Context, msg amqp.Delivery) {
 		return
 	}
 	if err := b.svc.SendLoginNotification(ctx, data); err != nil {
-		b.logger.Error("failed to send login notification", "error", err)
+		logger.Extract(ctx).Error("failed to send login notification", "error", err)
 		msg.Nack(false, true)
 		return
 	}
@@ -102,7 +103,7 @@ func (b *broker) consumeRegister(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		default:
-			go b.handleRegister(ctx, msg)
+			go b.handleRegister(logger.Inject(ctx, b.logger), msg)
 		}
 	}
 }
@@ -114,7 +115,7 @@ func (b *broker) handleRegister(ctx context.Context, msg amqp.Delivery) {
 		return
 	}
 	if err := b.svc.HandleRegister(ctx, data); err != nil {
-		b.logger.Error("failed to handle register", "error", err)
+		logger.Extract(ctx).Error("failed to handle register", "error", err)
 		msg.Nack(false, true)
 		return
 	}

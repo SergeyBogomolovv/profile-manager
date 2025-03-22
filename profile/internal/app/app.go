@@ -7,6 +7,7 @@ import (
 	"net"
 
 	"github.com/SergeyBogomolovv/profile-manager/common/auth"
+	"github.com/SergeyBogomolovv/profile-manager/common/logger"
 	"github.com/SergeyBogomolovv/profile-manager/profile/internal/config"
 	"google.golang.org/grpc"
 )
@@ -21,11 +22,13 @@ type GRPCController interface {
 	Init(srv *grpc.Server)
 }
 
-func New(logger *slog.Logger, conf *config.Config, grpcController GRPCController) *app {
-	jwtInterceptor := auth.NewJwtInterceptor([]byte(conf.JwtSecret))
-	grpcSrv := grpc.NewServer(grpc.UnaryInterceptor(jwtInterceptor))
+func New(log *slog.Logger, conf *config.Config, grpcController GRPCController) *app {
+	grpcSrv := grpc.NewServer(
+		grpc.UnaryInterceptor(auth.JwtInterceptor([]byte(conf.JwtSecret))),
+		grpc.UnaryInterceptor(logger.LoggerInterceptor(log)),
+	)
 	grpcController.Init(grpcSrv)
-	return &app{grpcSrv: grpcSrv, logger: logger, conf: conf}
+	return &app{grpcSrv: grpcSrv, logger: log, conf: conf}
 }
 
 func (a *app) Start() {

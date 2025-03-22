@@ -3,9 +3,9 @@ package repo
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/SergeyBogomolovv/profile-manager/common/e"
 	"github.com/SergeyBogomolovv/profile-manager/common/transaction"
 	"github.com/SergeyBogomolovv/profile-manager/notification/internal/domain"
 	"github.com/jmoiron/sqlx"
@@ -31,7 +31,7 @@ func (r *userRepo) Subscriptions(ctx context.Context, userID string) ([]domain.S
 
 	var subscriptions []SubscriptionWithUser
 	if err := r.db.SelectContext(ctx, &subscriptions, query, args...); err != nil {
-		return nil, err
+		return nil, e.Wrap(err, "failed to get subscriptions")
 	}
 
 	res := make([]domain.Subscription, len(subscriptions))
@@ -53,11 +53,9 @@ func (r *userRepo) SaveUser(ctx context.Context, user domain.User) error {
 	}
 	q := r.qb.Insert("users").SetMap(m)
 	query, args := q.MustSql()
+
 	_, err := r.execContext(ctx, query, args...)
-	if err != nil {
-		return fmt.Errorf("failed to save user: %w", err)
-	}
-	return nil
+	return e.WrapIfErr(err, "failed to save user")
 }
 
 func (r *userRepo) SaveSubscription(ctx context.Context, userID string, subType domain.SubscriptionType) error {
@@ -67,10 +65,7 @@ func (r *userRepo) SaveSubscription(ctx context.Context, userID string, subType 
 		Values(userID, subType).MustSql()
 
 	_, err := r.execContext(ctx, query, args...)
-	if err != nil {
-		return fmt.Errorf("failed to save subscription: %w", err)
-	}
-	return nil
+	return e.WrapIfErr(err, "failed to save subscription")
 }
 
 func (r *userRepo) execContext(ctx context.Context, query string, args ...any) (sql.Result, error) {

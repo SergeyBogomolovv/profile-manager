@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/SergeyBogomolovv/profile-manager/common/api/events"
 	"github.com/SergeyBogomolovv/profile-manager/common/transaction"
@@ -30,7 +29,7 @@ func New(txManager transaction.TxManager, mailer mailer.Mailer, users UserRepo) 
 func (s *service) SendLoginNotification(ctx context.Context, data events.UserLogin) error {
 	subscriptions, err := s.users.Subscriptions(ctx, data.ID)
 	if err != nil {
-		return fmt.Errorf("failed to get subscriptions: %w", err)
+		return err
 	}
 
 	var eg errgroup.Group

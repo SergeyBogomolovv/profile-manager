@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SergeyBogomolovv/profile-manager/common/logger"
 	"github.com/SergeyBogomolovv/profile-manager/sso/internal/config"
 	"github.com/go-chi/chi/v5"
 	"google.golang.org/grpc"
@@ -30,19 +31,19 @@ type GRPCController interface {
 	Init(srv *grpc.Server)
 }
 
-func New(logger *slog.Logger, conf *config.Config, httpController HTTPController, gRPCController GRPCController) *app {
+func New(log *slog.Logger, conf *config.Config, httpController HTTPController, gRPCController GRPCController) *app {
 	router := chi.NewRouter()
 
 	httpSrv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", conf.HttpPort),
 		Handler: router,
 	}
-	grpcSrv := grpc.NewServer()
+	grpcSrv := grpc.NewServer(grpc.UnaryInterceptor(logger.LoggerInterceptor(log)))
 
 	gRPCController.Init(grpcSrv)
 	httpController.Init(router)
 
-	return &app{httpSrv: httpSrv, grpcSrv: grpcSrv, logger: logger, conf: conf}
+	return &app{httpSrv: httpSrv, grpcSrv: grpcSrv, logger: log, conf: conf}
 }
 
 func (a *app) Start() {

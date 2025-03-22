@@ -2,7 +2,6 @@ package controller_test
 
 import (
 	"context"
-	"log/slog"
 	"testing"
 
 	pb "github.com/SergeyBogomolovv/profile-manager/common/api/profile"
@@ -47,7 +46,7 @@ func TestGRPCController_GetProfile(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			svc := mocks.NewProfileService(t)
 			tc.mockBehavior(svc, tc.userID)
-			c := controller.NewGRPCController(slog.Default(), svc)
+			c := controller.NewGRPCController(svc)
 			md := metadata.New(map[string]string{auth.UserIdKey: tc.userID})
 			ctx := metadata.NewIncomingContext(context.Background(), md)
 			got, err := c.GetProfile(ctx, &pb.GetProfileRequest{})
@@ -103,7 +102,7 @@ func TestGRPCController_UpdateProfile(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			svc := mocks.NewProfileService(t)
 			tc.mockBehavior(svc, tc.args)
-			c := controller.NewGRPCController(slog.Default(), svc)
+			c := controller.NewGRPCController(svc)
 			md := metadata.New(map[string]string{auth.UserIdKey: tc.args.userID})
 			ctx := metadata.NewIncomingContext(context.Background(), md)
 			got, err := c.UpdateProfile(ctx, tc.args.req)

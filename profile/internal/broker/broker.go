@@ -7,6 +7,7 @@ import (
 	"log/slog"
 
 	"github.com/SergeyBogomolovv/profile-manager/common/api/events"
+	"github.com/SergeyBogomolovv/profile-manager/common/logger"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -61,7 +62,7 @@ func (b *broker) consumeRegister(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		default:
-			go b.handleRegister(ctx, msg)
+			go b.handleRegister(logger.Inject(ctx, b.logger), msg)
 		}
 	}
 }

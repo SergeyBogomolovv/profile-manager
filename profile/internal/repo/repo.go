@@ -4,9 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/SergeyBogomolovv/profile-manager/common/e"
 	"github.com/SergeyBogomolovv/profile-manager/profile/internal/domain"
 	"github.com/jmoiron/sqlx"
 )
@@ -33,10 +33,7 @@ func (r *profileRepo) Create(ctx context.Context, profile domain.Profile) error 
 
 	query, args := qb.MustSql()
 	_, err := r.db.ExecContext(ctx, query, args...)
-	if err != nil {
-		return fmt.Errorf("failed to create profile: %w", err)
-	}
-	return nil
+	return e.WrapIfErr(err, "failed to create profile")
 }
 
 func (r *profileRepo) ProfileByID(ctx context.Context, id string) (domain.Profile, error) {
@@ -46,7 +43,7 @@ func (r *profileRepo) ProfileByID(ctx context.Context, id string) (domain.Profil
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.Profile{}, domain.ErrProfileNotFound
 		}
-		return domain.Profile{}, fmt.Errorf("failed to get profile: %w", err)
+		return domain.Profile{}, e.Wrap(err, "failed to get profile")
 	}
 	return profile.ToDomain(), nil
 }
@@ -65,7 +62,7 @@ func (r *profileRepo) Update(ctx context.Context, profile *domain.Profile) error
 	query, args := q.Where(sq.Eq{"user_id": profile.UserID}).Suffix("RETURNING *").MustSql()
 	var p Profile
 	if err := r.db.GetContext(ctx, &p, query, args...); err != nil {
-		return fmt.Errorf("failed to update profile: %w", err)
+		return e.Wrap(err, "failed to update profile")
 	}
 	*profile = p.ToDomain()
 	return nil
@@ -79,7 +76,7 @@ func (r *profileRepo) UsernameExists(ctx context.Context, username string) (bool
 		return false, nil
 	}
 	if err != nil {
-		return false, fmt.Errorf("failed to check username exists")
+		return false, e.Wrap(err, "failed to check username exists")
 	}
 	return ex, nil
 }
