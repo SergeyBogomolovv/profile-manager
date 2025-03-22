@@ -3,7 +3,6 @@ package broker
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"log/slog"
 
@@ -11,14 +10,15 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type Service interface{}
+type Service interface {
+	SendLoginNotification(ctx context.Context, data events.UserLogin) error
+	HandleRegister(ctx context.Context, data events.UserRegister) error
+}
 
 type broker struct {
-	loginQ    string
-	registerQ string
-	svc       Service
-	logger    *slog.Logger
-	ch        *amqp.Channel
+	svc    Service
+	logger *slog.Logger
+	ch     *amqp.Channel
 }
 
 func MustNew(logger *slog.Logger, conn *amqp.Connection, svc Service) *broker {
@@ -30,25 +30,7 @@ func MustNew(logger *slog.Logger, conn *amqp.Connection, svc Service) *broker {
 		log.Fatalf("failed to declare exchange: %v", err)
 	}
 
-	loginQ, err := ch.QueueDeclare(events.NotificationLoginQueue, true, false, false, false, nil)
-	if err != nil {
-		log.Fatalf("failed to declare login queue: %v", err)
-	}
-
-	registerQ, err := ch.QueueDeclare(events.NotificationRegisterQueue, true, false, false, false, nil)
-	if err != nil {
-		log.Fatalf("failed to declare register queue: %v", err)
-	}
-
-	if err := ch.QueueBind(loginQ.Name, events.LoginTopic, events.UserExchange, false, nil); err != nil {
-		log.Fatalf("failed to bind login queue: %v", err)
-	}
-
-	if err := ch.QueueBind(registerQ.Name, events.RegisterTopic, events.UserExchange, false, nil); err != nil {
-		log.Fatalf("failed to bind register queue: %v", err)
-	}
-
-	return &broker{ch: ch, loginQ: loginQ.Name, registerQ: registerQ.Name, svc: svc, logger: logger}
+	return &broker{ch: ch, svc: svc, logger: logger}
 }
 
 func (b *broker) Close() error {
@@ -62,7 +44,16 @@ func (b *broker) Consume(ctx context.Context) {
 }
 
 func (b *broker) consumeLogin(ctx context.Context) {
-	msgs, err := b.ch.Consume(b.loginQ, "", false, false, false, false, nil)
+	q, err := b.ch.QueueDeclare(events.NotificationLoginQueue, true, false, false, false, nil)
+	if err != nil {
+		log.Fatalf("failed to declare login queue: %v", err)
+	}
+
+	if err := b.ch.QueueBind(q.Name, events.LoginTopic, events.UserExchange, false, nil); err != nil {
+		log.Fatalf("failed to bind login queue: %v", err)
+	}
+
+	msgs, err := b.ch.Consume(q.Name, "", false, false, false, false, nil)
 	if err != nil {
 		log.Fatalf("failed to consume login queue: %v", err)
 	}
@@ -72,21 +63,36 @@ func (b *broker) consumeLogin(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		default:
-			go func() {
-				var data events.UserLogin
-				if err := json.Unmarshal(msg.Body, &data); err != nil {
-					msg.Nack(false, false)
-					return
-				}
-				fmt.Printf("user logined, sending notification, %+v\n", data)
-				msg.Ack(false)
-			}()
+			go b.handleLogin(ctx, msg)
 		}
 	}
 }
 
+func (b *broker) handleLogin(ctx context.Context, msg amqp.Delivery) {
+	var data events.UserLogin
+	if err := json.Unmarshal(msg.Body, &data); err != nil {
+		msg.Nack(false, true)
+		return
+	}
+	if err := b.svc.SendLoginNotification(ctx, data); err != nil {
+		b.logger.Error("failed to send login notification", "error", err)
+		msg.Nack(false, true)
+		return
+	}
+	msg.Ack(false)
+}
+
 func (b *broker) consumeRegister(ctx context.Context) {
-	msgs, err := b.ch.Consume(b.registerQ, "", false, false, false, false, nil)
+	q, err := b.ch.QueueDeclare(events.NotificationRegisterQueue, true, false, false, false, nil)
+	if err != nil {
+		log.Fatalf("failed to declare register queue: %v", err)
+	}
+
+	if err := b.ch.QueueBind(q.Name, events.RegisterTopic, events.UserExchange, false, nil); err != nil {
+		log.Fatalf("failed to bind register queue: %v", err)
+	}
+
+	msgs, err := b.ch.Consume(q.Name, "", false, false, false, false, nil)
 	if err != nil {
 		log.Fatalf("failed to consume register queue: %v", err)
 	}
@@ -96,15 +102,21 @@ func (b *broker) consumeRegister(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		default:
-			go func() {
-				var data events.UserRegister
-				if err := json.Unmarshal(msg.Body, &data); err != nil {
-					msg.Nack(false, false)
-					return
-				}
-				fmt.Printf("user registered, sending notification, %+v\n", data)
-				msg.Ack(false)
-			}()
+			go b.handleRegister(ctx, msg)
 		}
 	}
+}
+
+func (b *broker) handleRegister(ctx context.Context, msg amqp.Delivery) {
+	var data events.UserRegister
+	if err := json.Unmarshal(msg.Body, &data); err != nil {
+		msg.Nack(false, true)
+		return
+	}
+	if err := b.svc.HandleRegister(ctx, data); err != nil {
+		b.logger.Error("failed to handle register", "error", err)
+		msg.Nack(false, true)
+		return
+	}
+	msg.Ack(false)
 }

@@ -9,7 +9,7 @@ import (
 )
 
 type User struct {
-	ID         uuid.UUID      `db:"id"`
+	ID         uuid.UUID      `db:"user_id"`
 	Email      sql.NullString `db:"email"`
 	TelegramID sql.NullInt64  `db:"telegram_id"`
 	CreatedAt  time.Time      `db:"created_at"`
@@ -23,15 +23,21 @@ func (u User) ToDomain() domain.User {
 	}
 }
 
-type Subscription struct {
-	UserID  uuid.UUID               `db:"user_id"`
-	Type    domain.SubscriptionType `db:"type"`
-	Enabled bool                    `db:"enabled"`
+type SubscriptionWithUser struct {
+	UserID     uuid.UUID               `db:"user_id"`
+	Email      sql.NullString          `db:"email"`
+	TelegramID sql.NullInt64           `db:"telegram_id"`
+	Type       domain.SubscriptionType `db:"type"`
+	Enabled    bool                    `db:"enabled"`
 }
 
-func (s Subscription) ToDomain() domain.Subscription {
+func (s SubscriptionWithUser) ToDomain() domain.Subscription {
 	return domain.Subscription{
-		UserID:  s.UserID.String(),
+		User: domain.User{
+			ID:         s.UserID.String(),
+			Email:      s.Email.String,
+			TelegramID: s.TelegramID.Int64,
+		},
 		Type:    s.Type,
 		Enabled: s.Enabled,
 	}

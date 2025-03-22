@@ -8,7 +8,7 @@ const (
 )
 
 type Subscription struct {
-	UserID  string
+	User    User
 	Type    SubscriptionType
 	Enabled bool
 }

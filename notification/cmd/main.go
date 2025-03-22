@@ -10,6 +10,7 @@ import (
 
 	"github.com/SergeyBogomolovv/profile-manager/common/postgres"
 	"github.com/SergeyBogomolovv/profile-manager/common/rabbitmq"
+	"github.com/SergeyBogomolovv/profile-manager/common/transaction"
 	"github.com/SergeyBogomolovv/profile-manager/notification/internal/app"
 	"github.com/SergeyBogomolovv/profile-manager/notification/internal/broker"
 	"github.com/SergeyBogomolovv/profile-manager/notification/internal/config"
@@ -33,7 +34,9 @@ func main() {
 
 	mailer := mailer.New(conf.SMTP)
 	userRepo := repo.New(postgres)
-	svc := service.New(mailer, userRepo)
+	txManager := transaction.NewTxManager(postgres)
+	svc := service.New(txManager, mailer, userRepo)
+
 	broker := broker.MustNew(logger, amqpConn, svc)
 
 	app := app.New(logger, conf)
