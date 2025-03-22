@@ -32,7 +32,7 @@ func (s *service) SendLoginNotification(ctx context.Context, data events.UserLog
 		return err
 	}
 
-	var eg errgroup.Group
+	eg, ctx := errgroup.WithContext(ctx)
 	for _, sub := range subscriptions {
 		if sub.Enabled {
 			switch sub.Type {
@@ -62,7 +62,7 @@ func (s *service) sendLoginTelegram(id int64, data events.UserLogin) error {
 
 func (s *service) HandleRegister(ctx context.Context, data events.UserRegister) error {
 	return s.txManager.Run(ctx, func(ctx context.Context) error {
-		var eg errgroup.Group
+		eg, ctx := errgroup.WithContext(ctx)
 		eg.Go(func() error {
 			return s.users.SaveSubscription(ctx, data.ID, domain.SubscriptionTypeEmail)
 		})
