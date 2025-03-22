@@ -43,7 +43,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	go broker.Consume(ctx)
+	broker.Consume(ctx)
 	app.Start()
 	<-ctx.Done()
 	app.Stop()
