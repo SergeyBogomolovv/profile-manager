@@ -4,7 +4,7 @@ go 1.24.1
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/SergeyBogomolovv/profile-manager/common v0.0.0-20250320174040-f768ddd4907d
+	github.com/SergeyBogomolovv/profile-manager/common v0.0.0-20250322162046-d7b9ef53986b
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-playground/validator/v10 v10.25.0
 	github.com/google/uuid v1.6.0
