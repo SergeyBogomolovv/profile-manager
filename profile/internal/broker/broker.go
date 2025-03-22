@@ -60,12 +60,12 @@ func (b *broker) Consume(ctx context.Context) {
 			go func() {
 				var data events.UserRegister
 				if err := json.Unmarshal(msg.Body, &data); err != nil {
-					msg.Nack(false, false)
+					msg.Nack(false, true)
 					return
 				}
 				if err := b.profile.Create(ctx, data); err != nil {
 					b.logger.Error("failed to create profile", "error", err)
-					msg.Nack(false, false)
+					msg.Nack(false, true)
 					return
 				}
 				msg.Ack(false)
