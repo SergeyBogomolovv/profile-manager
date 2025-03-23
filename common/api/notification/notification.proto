@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = "api/notification";
+
+package notification;
+
+service Notification {
+  rpc GenerateTelegramToken(GenerateTelegramTokenRequest) returns (GenerateTelegramTokenResponse);
+}
+
+message GenerateTelegramTokenRequest {}
+
+message GenerateTelegramTokenResponse {
+  string token = 1;
+}
