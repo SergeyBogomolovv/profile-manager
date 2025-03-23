@@ -9,5 +9,6 @@ type User struct {
 }
 
 var (
-	ErrUserNotFound = errors.New("user not found")
+	ErrUserNotFound         = errors.New("user not found")
+	ErrAccountAlreadyExists = errors.New("account already exists")
 )

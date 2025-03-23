@@ -24,8 +24,10 @@ type GRPCController interface {
 
 func New(log *slog.Logger, conf *config.Config, grpcController GRPCController) *app {
 	grpcSrv := grpc.NewServer(
-		grpc.UnaryInterceptor(auth.JwtInterceptor([]byte(conf.JwtSecret))),
-		grpc.UnaryInterceptor(logger.LoggerInterceptor(log)),
+		grpc.ChainUnaryInterceptor(
+			logger.LoggerInterceptor(log),
+			auth.JwtInterceptor([]byte(conf.JwtSecret)),
+		),
 	)
 	grpcController.Init(grpcSrv)
 	return &app{grpcSrv: grpcSrv, logger: log, conf: conf}

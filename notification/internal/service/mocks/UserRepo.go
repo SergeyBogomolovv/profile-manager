@@ -22,60 +22,126 @@ func (_m *UserRepo) EXPECT() *UserRepo_Expecter {
 	return &UserRepo_Expecter{mock: &_m.Mock}
 }
 
-// SaveSubscription provides a mock function with given fields: ctx, userID, subType
-func (_m *UserRepo) SaveSubscription(ctx context.Context, userID string, subType domain.SubscriptionType) error {
-	ret := _m.Called(ctx, userID, subType)
+// GetByID provides a mock function with given fields: ctx, userID
+func (_m *UserRepo) GetByID(ctx context.Context, userID string) (domain.User, error) {
+	ret := _m.Called(ctx, userID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for SaveSubscription")
+		panic("no return value specified for GetByID")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, domain.SubscriptionType) error); ok {
-		r0 = rf(ctx, userID, subType)
+	var r0 domain.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (domain.User, error)); ok {
+		return rf(ctx, userID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) domain.User); ok {
+		r0 = rf(ctx, userID)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(domain.User)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
-// UserRepo_SaveSubscription_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveSubscription'
-type UserRepo_SaveSubscription_Call struct {
+// UserRepo_GetByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByID'
+type UserRepo_GetByID_Call struct {
 	*mock.Call
 }
 
-// SaveSubscription is a helper method to define mock.On call
+// GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-//   - subType domain.SubscriptionType
-func (_e *UserRepo_Expecter) SaveSubscription(ctx interface{}, userID interface{}, subType interface{}) *UserRepo_SaveSubscription_Call {
-	return &UserRepo_SaveSubscription_Call{Call: _e.mock.On("SaveSubscription", ctx, userID, subType)}
+func (_e *UserRepo_Expecter) GetByID(ctx interface{}, userID interface{}) *UserRepo_GetByID_Call {
+	return &UserRepo_GetByID_Call{Call: _e.mock.On("GetByID", ctx, userID)}
 }
 
-func (_c *UserRepo_SaveSubscription_Call) Run(run func(ctx context.Context, userID string, subType domain.SubscriptionType)) *UserRepo_SaveSubscription_Call {
+func (_c *UserRepo_GetByID_Call) Run(run func(ctx context.Context, userID string)) *UserRepo_GetByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(domain.SubscriptionType))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
 
-func (_c *UserRepo_SaveSubscription_Call) Return(_a0 error) *UserRepo_SaveSubscription_Call {
-	_c.Call.Return(_a0)
+func (_c *UserRepo_GetByID_Call) Return(_a0 domain.User, _a1 error) *UserRepo_GetByID_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *UserRepo_SaveSubscription_Call) RunAndReturn(run func(context.Context, string, domain.SubscriptionType) error) *UserRepo_SaveSubscription_Call {
+func (_c *UserRepo_GetByID_Call) RunAndReturn(run func(context.Context, string) (domain.User, error)) *UserRepo_GetByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// SaveUser provides a mock function with given fields: ctx, user
-func (_m *UserRepo) SaveUser(ctx context.Context, user domain.User) error {
+// IsExists provides a mock function with given fields: ctx, userID
+func (_m *UserRepo) IsExists(ctx context.Context, userID string) (bool, error) {
+	ret := _m.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsExists")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (bool, error)); ok {
+		return rf(ctx, userID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) bool); ok {
+		r0 = rf(ctx, userID)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UserRepo_IsExists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsExists'
+type UserRepo_IsExists_Call struct {
+	*mock.Call
+}
+
+// IsExists is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+func (_e *UserRepo_Expecter) IsExists(ctx interface{}, userID interface{}) *UserRepo_IsExists_Call {
+	return &UserRepo_IsExists_Call{Call: _e.mock.On("IsExists", ctx, userID)}
+}
+
+func (_c *UserRepo_IsExists_Call) Run(run func(ctx context.Context, userID string)) *UserRepo_IsExists_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *UserRepo_IsExists_Call) Return(_a0 bool, _a1 error) *UserRepo_IsExists_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *UserRepo_IsExists_Call) RunAndReturn(run func(context.Context, string) (bool, error)) *UserRepo_IsExists_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Save provides a mock function with given fields: ctx, user
+func (_m *UserRepo) Save(ctx context.Context, user domain.User) error {
 	ret := _m.Called(ctx, user)
 
 	if len(ret) == 0 {
-		panic("no return value specified for SaveUser")
+		panic("no return value specified for Save")
 	}
 
 	var r0 error
@@ -88,90 +154,78 @@ func (_m *UserRepo) SaveUser(ctx context.Context, user domain.User) error {
 	return r0
 }
 
-// UserRepo_SaveUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveUser'
-type UserRepo_SaveUser_Call struct {
+// UserRepo_Save_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Save'
+type UserRepo_Save_Call struct {
 	*mock.Call
 }
 
-// SaveUser is a helper method to define mock.On call
+// Save is a helper method to define mock.On call
 //   - ctx context.Context
 //   - user domain.User
-func (_e *UserRepo_Expecter) SaveUser(ctx interface{}, user interface{}) *UserRepo_SaveUser_Call {
-	return &UserRepo_SaveUser_Call{Call: _e.mock.On("SaveUser", ctx, user)}
+func (_e *UserRepo_Expecter) Save(ctx interface{}, user interface{}) *UserRepo_Save_Call {
+	return &UserRepo_Save_Call{Call: _e.mock.On("Save", ctx, user)}
 }
 
-func (_c *UserRepo_SaveUser_Call) Run(run func(ctx context.Context, user domain.User)) *UserRepo_SaveUser_Call {
+func (_c *UserRepo_Save_Call) Run(run func(ctx context.Context, user domain.User)) *UserRepo_Save_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(domain.User))
 	})
 	return _c
 }
 
-func (_c *UserRepo_SaveUser_Call) Return(_a0 error) *UserRepo_SaveUser_Call {
+func (_c *UserRepo_Save_Call) Return(_a0 error) *UserRepo_Save_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *UserRepo_SaveUser_Call) RunAndReturn(run func(context.Context, domain.User) error) *UserRepo_SaveUser_Call {
+func (_c *UserRepo_Save_Call) RunAndReturn(run func(context.Context, domain.User) error) *UserRepo_Save_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// Subscriptions provides a mock function with given fields: ctx, userID
-func (_m *UserRepo) Subscriptions(ctx context.Context, userID string) ([]domain.Subscription, error) {
-	ret := _m.Called(ctx, userID)
+// Update provides a mock function with given fields: ctx, user
+func (_m *UserRepo) Update(ctx context.Context, user domain.User) error {
+	ret := _m.Called(ctx, user)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Subscriptions")
+		panic("no return value specified for Update")
 	}
 
-	var r0 []domain.Subscription
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]domain.Subscription, error)); ok {
-		return rf(ctx, userID)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []domain.Subscription); ok {
-		r0 = rf(ctx, userID)
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, domain.User) error); ok {
+		r0 = rf(ctx, user)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]domain.Subscription)
-		}
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, userID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
-// UserRepo_Subscriptions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Subscriptions'
-type UserRepo_Subscriptions_Call struct {
+// UserRepo_Update_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Update'
+type UserRepo_Update_Call struct {
 	*mock.Call
 }
 
-// Subscriptions is a helper method to define mock.On call
+// Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - userID string
-func (_e *UserRepo_Expecter) Subscriptions(ctx interface{}, userID interface{}) *UserRepo_Subscriptions_Call {
-	return &UserRepo_Subscriptions_Call{Call: _e.mock.On("Subscriptions", ctx, userID)}
+//   - user domain.User
+func (_e *UserRepo_Expecter) Update(ctx interface{}, user interface{}) *UserRepo_Update_Call {
+	return &UserRepo_Update_Call{Call: _e.mock.On("Update", ctx, user)}
 }
 
-func (_c *UserRepo_Subscriptions_Call) Run(run func(ctx context.Context, userID string)) *UserRepo_Subscriptions_Call {
+func (_c *UserRepo_Update_Call) Run(run func(ctx context.Context, user domain.User)) *UserRepo_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(domain.User))
 	})
 	return _c
 }
 
-func (_c *UserRepo_Subscriptions_Call) Return(_a0 []domain.Subscription, _a1 error) *UserRepo_Subscriptions_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *UserRepo_Update_Call) Return(_a0 error) *UserRepo_Update_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *UserRepo_Subscriptions_Call) RunAndReturn(run func(context.Context, string) ([]domain.Subscription, error)) *UserRepo_Subscriptions_Call {
+func (_c *UserRepo_Update_Call) RunAndReturn(run func(context.Context, domain.User) error) *UserRepo_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

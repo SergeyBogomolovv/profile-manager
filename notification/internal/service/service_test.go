@@ -15,7 +15,13 @@ import (
 )
 
 func TestService_HandleRegister(t *testing.T) {
-	type MockBehavior func(tx *txMocks.TxManager, users *mocks.UserRepo, mailer *mailMocks.Mailer, data events.UserRegister)
+	type MockBehavior func(
+		tx *txMocks.TxManager,
+		subscriptions *mocks.SubscriptionRepo,
+		users *mocks.UserRepo,
+		mailer *mailMocks.Mailer,
+		data events.UserRegister,
+	)
 
 	testCases := []struct {
 		name         string
@@ -29,33 +35,66 @@ func TestService_HandleRegister(t *testing.T) {
 				ID:    "user123",
 				Email: "user@example.com",
 			},
-			mockBehavior: func(tx *txMocks.TxManager, users *mocks.UserRepo, mailer *mailMocks.Mailer, data events.UserRegister) {
+			mockBehavior: func(
+				tx *txMocks.TxManager,
+				subscriptions *mocks.SubscriptionRepo,
+				users *mocks.UserRepo,
+				mailer *mailMocks.Mailer,
+				data events.UserRegister,
+			) {
 				tx.EXPECT().Run(mock.Anything, mock.AnythingOfType("func(context.Context) error")).RunAndReturn(
 					func(ctx context.Context, f func(context.Context) error) error {
 						return f(ctx)
 					},
 				)
-				users.EXPECT().SaveSubscription(mock.Anything, data.ID, domain.SubscriptionTypeEmail).Return(nil)
-				users.EXPECT().SaveUser(mock.Anything, domain.User{ID: data.ID, Email: data.Email}).Return(nil)
+				subscriptions.EXPECT().Save(mock.Anything, data.ID, domain.SubscriptionTypeEmail).Return(nil)
+				users.EXPECT().Save(mock.Anything, domain.User{ID: data.ID, Email: data.Email}).Return(nil)
 				mailer.EXPECT().SendRegisterEmail(data.Email).Return(nil)
 			},
 			wantErr: nil,
 		},
 		{
-			name: "failed",
+			name: "failed to save user",
 			data: events.UserRegister{
 				ID:    "user123",
 				Email: "user@example.com",
 			},
-			mockBehavior: func(tx *txMocks.TxManager, users *mocks.UserRepo, mailer *mailMocks.Mailer, data events.UserRegister) {
+			mockBehavior: func(
+				tx *txMocks.TxManager,
+				subscriptions *mocks.SubscriptionRepo,
+				users *mocks.UserRepo,
+				mailer *mailMocks.Mailer,
+				data events.UserRegister,
+			) {
 				tx.EXPECT().Run(mock.Anything, mock.AnythingOfType("func(context.Context) error")).RunAndReturn(
 					func(ctx context.Context, f func(context.Context) error) error {
 						return f(ctx)
 					},
 				)
-				users.EXPECT().SaveSubscription(mock.Anything, data.ID, domain.SubscriptionTypeEmail).Return(nil)
-				users.EXPECT().SaveUser(mock.Anything, domain.User{ID: data.ID, Email: data.Email}).Return(assert.AnError)
-				mailer.EXPECT().SendRegisterEmail(data.Email).Return(nil)
+				users.EXPECT().Save(mock.Anything, domain.User{ID: data.ID, Email: data.Email}).Return(assert.AnError)
+			},
+			wantErr: assert.AnError,
+		},
+		{
+			name: "failed to save subscription",
+			data: events.UserRegister{
+				ID:    "user123",
+				Email: "user@example.com",
+			},
+			mockBehavior: func(
+				tx *txMocks.TxManager,
+				subscriptions *mocks.SubscriptionRepo,
+				users *mocks.UserRepo,
+				mailer *mailMocks.Mailer,
+				data events.UserRegister,
+			) {
+				tx.EXPECT().Run(mock.Anything, mock.AnythingOfType("func(context.Context) error")).RunAndReturn(
+					func(ctx context.Context, f func(context.Context) error) error {
+						return f(ctx)
+					},
+				)
+				users.EXPECT().Save(mock.Anything, domain.User{ID: data.ID, Email: data.Email}).Return(nil)
+				subscriptions.EXPECT().Save(mock.Anything, data.ID, domain.SubscriptionTypeEmail).Return(assert.AnError)
 			},
 			wantErr: assert.AnError,
 		},
@@ -65,9 +104,12 @@ func TestService_HandleRegister(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tx := txMocks.NewTxManager(t)
 			users := mocks.NewUserRepo(t)
+			subscriptions := mocks.NewSubscriptionRepo(t)
+			tokens := mocks.NewTokenRepo(t)
 			mailer := mailMocks.NewMailer(t)
-			svc := service.New(tx, mailer, users)
-			tc.mockBehavior(tx, users, mailer, tc.data)
+			sender := mocks.NewSender(t)
+			svc := service.New(tx, mailer, sender, users, tokens, subscriptions)
+			tc.mockBehavior(tx, subscriptions, users, mailer, tc.data)
 			err := svc.HandleRegister(context.Background(), tc.data)
 			assert.ErrorIs(t, err, tc.wantErr)
 		})
@@ -75,7 +117,7 @@ func TestService_HandleRegister(t *testing.T) {
 }
 
 func TestService_SendLoginNotification(t *testing.T) {
-	type MockBehavior func(users *mocks.UserRepo, mailer *mailMocks.Mailer, data events.UserLogin)
+	type MockBehavior func(subs *mocks.SubscriptionRepo, sender *mocks.Sender, mailer *mailMocks.Mailer, data events.UserLogin)
 
 	testCases := []struct {
 		name         string
@@ -88,17 +130,18 @@ func TestService_SendLoginNotification(t *testing.T) {
 			data: events.UserLogin{
 				ID: "user123",
 			},
-			mockBehavior: func(users *mocks.UserRepo, mailer *mailMocks.Mailer, data events.UserLogin) {
-				users.EXPECT().Subscriptions(mock.Anything, data.ID).Return([]domain.Subscription{
+			mockBehavior: func(subs *mocks.SubscriptionRepo, sender *mocks.Sender, mailer *mailMocks.Mailer, data events.UserLogin) {
+				subs.EXPECT().SubscriptionsByUser(mock.Anything, data.ID).Return([]domain.Subscription{
 					{User: domain.User{Email: "user@example.com"}, Type: domain.SubscriptionTypeEmail, Enabled: true},
 					{User: domain.User{TelegramID: 123}, Type: domain.SubscriptionTypeTelegram, Enabled: true},
 				}, nil)
-				mailer.EXPECT().SendLoginEmail("user@example.com",
-					domain.LoginNotification{
-						IP:   data.IP,
-						Time: data.Time.Format("2006-01-02 15:04:05"),
-						Type: data.Type,
-					}).Return(nil)
+				noti := domain.LoginNotification{
+					IP:   data.IP,
+					Time: data.Time.Format("2006-01-02 15:04:05"),
+					Type: data.Type,
+				}
+				mailer.EXPECT().SendLoginEmail("user@example.com", noti).Return(nil)
+				sender.EXPECT().SendLoginNotification(int64(123), noti).Return(nil)
 			},
 			wantErr: nil,
 		},
@@ -107,8 +150,8 @@ func TestService_SendLoginNotification(t *testing.T) {
 			data: events.UserLogin{
 				ID: "user123",
 			},
-			mockBehavior: func(users *mocks.UserRepo, mailer *mailMocks.Mailer, data events.UserLogin) {
-				users.EXPECT().Subscriptions(mock.Anything, data.ID).Return([]domain.Subscription{
+			mockBehavior: func(subs *mocks.SubscriptionRepo, sender *mocks.Sender, mailer *mailMocks.Mailer, data events.UserLogin) {
+				subs.EXPECT().SubscriptionsByUser(mock.Anything, data.ID).Return([]domain.Subscription{
 					{User: domain.User{Email: "user@example.com"}, Type: domain.SubscriptionTypeEmail, Enabled: true},
 				}, nil)
 				mailer.EXPECT().SendLoginEmail("user@example.com",
@@ -125,10 +168,16 @@ func TestService_SendLoginNotification(t *testing.T) {
 			data: events.UserLogin{
 				ID: "user123",
 			},
-			mockBehavior: func(users *mocks.UserRepo, mailer *mailMocks.Mailer, data events.UserLogin) {
-				users.EXPECT().Subscriptions(mock.Anything, data.ID).Return([]domain.Subscription{
+			mockBehavior: func(subs *mocks.SubscriptionRepo, sender *mocks.Sender, mailer *mailMocks.Mailer, data events.UserLogin) {
+				subs.EXPECT().SubscriptionsByUser(mock.Anything, data.ID).Return([]domain.Subscription{
 					{User: domain.User{TelegramID: 123}, Type: domain.SubscriptionTypeTelegram, Enabled: true},
 				}, nil)
+				sender.EXPECT().SendLoginNotification(int64(123),
+					domain.LoginNotification{
+						IP:   data.IP,
+						Time: data.Time.Format("2006-01-02 15:04:05"),
+						Type: data.Type,
+					}).Return(nil)
 			},
 			wantErr: nil,
 		},
@@ -137,8 +186,8 @@ func TestService_SendLoginNotification(t *testing.T) {
 			data: events.UserLogin{
 				ID: "user123",
 			},
-			mockBehavior: func(users *mocks.UserRepo, mailer *mailMocks.Mailer, data events.UserLogin) {
-				users.EXPECT().Subscriptions(mock.Anything, data.ID).Return(nil, assert.AnError)
+			mockBehavior: func(subs *mocks.SubscriptionRepo, sender *mocks.Sender, mailer *mailMocks.Mailer, data events.UserLogin) {
+				subs.EXPECT().SubscriptionsByUser(mock.Anything, data.ID).Return(nil, assert.AnError)
 			},
 			wantErr: assert.AnError,
 		},
@@ -148,9 +197,12 @@ func TestService_SendLoginNotification(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tx := txMocks.NewTxManager(t)
 			users := mocks.NewUserRepo(t)
+			subs := mocks.NewSubscriptionRepo(t)
+			tokens := mocks.NewTokenRepo(t)
 			mailer := mailMocks.NewMailer(t)
-			svc := service.New(tx, mailer, users)
-			tc.mockBehavior(users, mailer, tc.data)
+			sender := mocks.NewSender(t)
+			svc := service.New(tx, mailer, sender, users, tokens, subs)
+			tc.mockBehavior(subs, sender, mailer, tc.data)
 			err := svc.SendLoginNotification(context.Background(), tc.data)
 			assert.ErrorIs(t, err, tc.wantErr)
 		})

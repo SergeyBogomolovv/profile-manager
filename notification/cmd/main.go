@@ -10,13 +10,17 @@ import (
 
 	"github.com/SergeyBogomolovv/profile-manager/common/postgres"
 	"github.com/SergeyBogomolovv/profile-manager/common/rabbitmq"
+	"github.com/SergeyBogomolovv/profile-manager/common/redis"
 	"github.com/SergeyBogomolovv/profile-manager/common/transaction"
 	"github.com/SergeyBogomolovv/profile-manager/notification/internal/app"
 	"github.com/SergeyBogomolovv/profile-manager/notification/internal/broker"
 	"github.com/SergeyBogomolovv/profile-manager/notification/internal/config"
+	"github.com/SergeyBogomolovv/profile-manager/notification/internal/controller"
 	"github.com/SergeyBogomolovv/profile-manager/notification/internal/mailer"
 	"github.com/SergeyBogomolovv/profile-manager/notification/internal/repo"
 	"github.com/SergeyBogomolovv/profile-manager/notification/internal/service"
+	"github.com/SergeyBogomolovv/profile-manager/notification/internal/telegram"
+	"github.com/SergeyBogomolovv/profile-manager/notification/pkg/bot"
 	"github.com/joho/godotenv"
 )
 
@@ -25,29 +29,37 @@ func main() {
 	flag.Parse()
 	conf := config.MustLoadConfig(*confPath)
 
+	redis := redis.MustNew(conf.RedisURL)
+	defer redis.Close()
 	postgres := postgres.MustNew(conf.PostgresURL)
 	defer postgres.Close()
 	amqpConn := rabbitmq.MustNew(conf.RabbitmqURL)
 	defer amqpConn.Close()
 
+	bot := bot.MustNew(conf.TelegramToken)
 	logger := newLogger()
 
 	mailer := mailer.New(conf.SMTP)
-	userRepo := repo.New(postgres)
+	sender := telegram.NewSender(bot)
+	userRepo := repo.NewUserRepo(postgres)
+	tokenRepo := repo.NewTokenRepo(redis)
+	subscriptionRepo := repo.NewSubscriptionRepo(postgres)
 	txManager := transaction.NewTxManager(postgres)
-	svc := service.New(txManager, mailer, userRepo)
+	svc := service.New(txManager, mailer, sender, userRepo, tokenRepo, subscriptionRepo)
+
+	loginer := telegram.NewLoginer(logger, bot, svc)
+	loginer.Init()
 
 	broker := broker.MustNew(logger, amqpConn, svc)
 
-	app := app.New(logger, conf)
+	controller := controller.New(svc)
+	app := app.New(logger, conf, controller, bot, broker)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
-	broker.Consume(ctx)
-	app.Start()
+	app.Start(ctx)
 	<-ctx.Done()
 	app.Stop()
-	broker.Close()
 }
 
 func init() {

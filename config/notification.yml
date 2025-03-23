@@ -2,3 +2,5 @@ smtp:
   host: smtp.gmail.com
   port: 465
   user: geraxfn@gmail.com
+
+grpc_port: 50053

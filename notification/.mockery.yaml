@@ -13,3 +13,9 @@ packages:
   github.com/SergeyBogomolovv/profile-manager/notification/internal/service:
     interfaces:
       UserRepo:
+      Sender:
+      TokenRepo:
+      SubscriptionRepo:
+  github.com/SergeyBogomolovv/profile-manager/notification/internal/controller:
+    interfaces:
+      Service:
