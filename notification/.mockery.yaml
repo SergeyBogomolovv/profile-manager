@@ -1,0 +1,15 @@
+with-expecter: True
+dir: '{{.InterfaceDir}}/mocks'
+outpkg: mocks
+filename: '{{.InterfaceName}}.go'
+mockname: '{{.InterfaceName}}'
+resolve-type-alias: False
+disable-version-string: True
+issue-845-fix: True
+packages:
+  github.com/SergeyBogomolovv/profile-manager/notification/internal/mailer:
+    interfaces:
+      Mailer:
+  github.com/SergeyBogomolovv/profile-manager/notification/internal/service:
+    interfaces:
+      UserRepo:
