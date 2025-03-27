@@ -84,7 +84,6 @@ func (s *service) HandleRegister(ctx context.Context, data events.UserRegister) 
 	})
 }
 
-// TODO: test
 func (s *service) VerifyTelegram(ctx context.Context, token string, telegramID int64) error {
 	return s.txManager.Run(ctx, func(ctx context.Context) error {
 		userID, err := s.tokens.CheckUserID(ctx, token)
@@ -112,7 +111,6 @@ func (s *service) VerifyTelegram(ctx context.Context, token string, telegramID i
 	})
 }
 
-// TODO: test
 func (s *service) GenerateToken(ctx context.Context, userID string) (string, error) {
 	isExists, err := s.users.IsExists(ctx, userID)
 	if err != nil {

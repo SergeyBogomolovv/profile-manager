@@ -27,10 +27,15 @@ func NewLoginer(logger *slog.Logger, bot *tele.Bot, service Service) *loginer {
 func (l *loginer) Init() {
 	l.bot.Handle("/start", l.handleStart)
 	l.bot.Handle("/verify", l.handleVerify)
+	l.bot.Handle(tele.OnText, l.handleMessage)
 }
 
 func (l *loginer) handleStart(c tele.Context) error {
 	return c.Send("Привет! Используйте /verify <токен> для подтверждения аккаунта.")
+}
+
+func (l *loginer) handleMessage(c tele.Context) error {
+	return c.Send("Команда не распознана. Используйте /verify <токен> для подтверждения аккаунта.")
 }
 
 func (l *loginer) handleVerify(c tele.Context) error {

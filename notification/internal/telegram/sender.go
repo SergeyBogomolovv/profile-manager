@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/SergeyBogomolovv/profile-manager/notification/internal/domain"
 	tele "gopkg.in/telebot.v4"
@@ -20,9 +21,13 @@ func NewSender(bot *tele.Bot) Sender {
 }
 
 func (s *sender) SendLoginNotification(telegramID int64, data domain.LoginNotification) error {
-	_, err := s.bot.Send(tele.ChatID(telegramID), "Login\n\n"+"IP: "+data.IP+"\nTime: "+data.Time+"\nType: "+data.Type)
+	_, err := s.bot.Send(tele.ChatID(telegramID), loginMessage(data))
 	if errors.Is(err, tele.ErrBlockedByUser) {
 		return nil
 	}
 	return err
+}
+
+func loginMessage(data domain.LoginNotification) string {
+	return fmt.Sprintf("⚠️Произведен вход в аккаунт⚠️\n\nIP: %s\nВремя: %s\nТип: %s", data.IP, data.Time, data.Type)
 }
