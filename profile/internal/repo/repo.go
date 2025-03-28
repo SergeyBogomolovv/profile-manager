@@ -22,16 +22,19 @@ func NewProfileRepo(db *sqlx.DB) *profileRepo {
 }
 
 func (r *profileRepo) Create(ctx context.Context, profile domain.Profile) error {
-	qb := r.qb.Insert("profiles").Columns("user_id", "username").Values(profile.UserID, profile.Username)
+	m := map[string]any{
+		"user_id":  profile.UserID,
+		"username": profile.Username,
+	}
 
 	if profile.FirstName != "" {
-		qb = qb.Columns("first_name").Values(profile.FirstName)
+		m["first_name"] = profile.FirstName
 	}
 	if profile.Avatar != "" {
-		qb = qb.Columns("avatar").Values(profile.Avatar)
+		m["avatar"] = profile.Avatar
 	}
 
-	query, args := qb.MustSql()
+	query, args := r.qb.Insert("profiles").SetMap(m).MustSql()
 	_, err := r.db.ExecContext(ctx, query, args...)
 	return e.WrapIfErr(err, "failed to create profile")
 }
