@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/SergeyBogomolovv/profile-manager/common/api/events"
 	"github.com/SergeyBogomolovv/profile-manager/sso/internal/domain"
 	"github.com/google/uuid"
 )
 
-func (s *authService) OAuth(ctx context.Context, info domain.OAuthUserInfo, provider domain.AccountType) (domain.Tokens, error) {
+func (s *authService) OAuth(ctx context.Context, info domain.OAuthUserInfo, provider domain.AccountType, ip string) (domain.Tokens, error) {
 	var user domain.User
 	var account domain.Account
 
@@ -42,7 +43,20 @@ func (s *authService) OAuth(ctx context.Context, info domain.OAuthUserInfo, prov
 		return domain.Tokens{}, domain.ErrInvalidCredentials
 	}
 
-	return s.createTokens(ctx, user.ID)
+	tokens, err := s.createTokens(ctx, user.ID)
+	if err != nil {
+		return domain.Tokens{}, err
+	}
+	err = s.broker.PublishUserLogin(events.UserLogin{
+		ID:   user.ID.String(),
+		IP:   ip,
+		Time: time.Now(),
+		Type: string(provider),
+	})
+	if err != nil {
+		return domain.Tokens{}, err
+	}
+	return tokens, nil
 }
 
 func (s *authService) ensureUser(ctx context.Context, email string) (domain.User, bool, error) {

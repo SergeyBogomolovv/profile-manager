@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"net"
 	"net/http"
+	"strings"
 
 	"github.com/SergeyBogomolovv/profile-manager/common/httpx"
 	"github.com/SergeyBogomolovv/profile-manager/sso/internal/config"
@@ -17,7 +19,7 @@ import (
 const userInfoUrl = "https://www.googleapis.com/oauth2/v2/userinfo"
 
 type OAuthService interface {
-	OAuth(ctx context.Context, info domain.OAuthUserInfo, provider domain.AccountType) (domain.Tokens, error)
+	OAuth(ctx context.Context, info domain.OAuthUserInfo, provider domain.AccountType, ip string) (domain.Tokens, error)
 }
 
 type httpController struct {
@@ -90,7 +92,15 @@ func (c *httpController) HandleCallback(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	tokens, err := c.svc.OAuth(r.Context(), user, domain.AccountTypeGoogle)
+	ip := r.Header.Get("X-Forwarded-For")
+	if ip == "" {
+		ip, _, _ = net.SplitHostPort(r.RemoteAddr)
+	} else {
+		ips := strings.Split(ip, ",")
+		ip = strings.TrimSpace(ips[0])
+	}
+
+	tokens, err := c.svc.OAuth(r.Context(), user, domain.AccountTypeGoogle, ip)
 	if err != nil {
 		logger.Error("failed to sign in", "err", err)
 		httpx.WriteError(w, "Failed to sign in", http.StatusInternalServerError)
