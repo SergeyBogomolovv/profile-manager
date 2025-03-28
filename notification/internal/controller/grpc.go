@@ -14,17 +14,17 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type Service interface {
+type SetupService interface {
 	GenerateToken(ctx context.Context, userID string) (string, error)
 }
 
 type controller struct {
 	pb.UnimplementedNotificationServer
-	svc      Service
+	svc      SetupService
 	validate *validator.Validate
 }
 
-func New(svc Service) *controller {
+func New(svc SetupService) *controller {
 	validate := validator.New()
 	return &controller{svc: svc, validate: validate}
 }

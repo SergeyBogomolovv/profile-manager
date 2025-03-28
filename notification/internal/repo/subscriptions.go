@@ -62,6 +62,27 @@ func (r *subscriptionRepo) IsExists(ctx context.Context, userID string, subType 
 	return exists, e.WrapIfErr(err, "failed to check subscription exists")
 }
 
+func (r *subscriptionRepo) Update(ctx context.Context, userID string, subType domain.SubscriptionType, enabled bool) error {
+	query, args := r.qb.
+		Update("subscriptions").
+		Set("enabled", enabled).
+		Where(sq.Eq{"user_id": userID, "type": subType}).
+		MustSql()
+
+	_, err := r.execContext(ctx, query, args...)
+	return e.WrapIfErr(err, "failed to update subscription")
+}
+
+func (r *subscriptionRepo) Delete(ctx context.Context, userID string, subType domain.SubscriptionType) error {
+	query, args := r.qb.
+		Delete("subscriptions").
+		Where(sq.Eq{"user_id": userID, "type": subType}).
+		MustSql()
+
+	_, err := r.execContext(ctx, query, args...)
+	return e.WrapIfErr(err, "failed to delete subscription")
+}
+
 func (r *subscriptionRepo) execContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
 	tx := transaction.ExtractTx(ctx)
 	if tx != nil {

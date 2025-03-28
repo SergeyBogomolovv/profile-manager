@@ -1,5 +1,7 @@
 package domain
 
+import "errors"
+
 type SubscriptionType string
 
 const (
@@ -12,3 +14,7 @@ type Subscription struct {
 	Type    SubscriptionType
 	Enabled bool
 }
+
+var (
+	ErrActionDontNeeded = errors.New("action dont needed")
+)

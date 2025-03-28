@@ -12,10 +12,12 @@ packages:
       Mailer:
   github.com/SergeyBogomolovv/profile-manager/notification/internal/service:
     interfaces:
-      UserRepo:
+      SetupTokenRepo:
+      SetupUserRepo:
+      SetupSubsRepo:
       Sender:
-      TokenRepo:
-      SubscriptionRepo:
+      NotifyUserRepo:
+      NotifySubsRepo:
   github.com/SergeyBogomolovv/profile-manager/notification/internal/controller:
     interfaces:
       Service:

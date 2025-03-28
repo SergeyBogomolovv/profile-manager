@@ -43,16 +43,17 @@ func main() {
 	sender := telegram.NewSender(bot)
 	userRepo := repo.NewUserRepo(postgres)
 	tokenRepo := repo.NewTokenRepo(redis)
-	subscriptionRepo := repo.NewSubscriptionRepo(postgres)
+	subsRepo := repo.NewSubscriptionRepo(postgres)
 	txManager := transaction.NewTxManager(postgres)
-	svc := service.New(txManager, mailer, sender, userRepo, tokenRepo, subscriptionRepo)
+	setupSvc := service.NewSetupService(txManager, userRepo, tokenRepo, subsRepo)
+	notifySvc := service.NewNotifyService(txManager, mailer, sender, userRepo, subsRepo)
 
-	loginer := telegram.NewLoginer(logger, bot, svc)
+	loginer := telegram.NewLoginer(logger, bot, setupSvc)
 	loginer.Init()
 
-	broker := broker.MustNew(logger, amqpConn, svc)
+	broker := broker.MustNew(logger, amqpConn, notifySvc)
 
-	controller := controller.New(svc)
+	controller := controller.New(setupSvc)
 	app := app.New(logger, conf, controller, bot, broker)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)

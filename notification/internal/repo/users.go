@@ -33,8 +33,7 @@ func (r *userRepo) Save(ctx context.Context, user domain.User) error {
 	if user.TelegramID != 0 {
 		m["telegram_id"] = user.TelegramID
 	}
-	q := r.qb.Insert("users").SetMap(m)
-	query, args := q.MustSql()
+	query, args := r.qb.Insert("users").SetMap(m).MustSql()
 
 	_, err := r.execContext(ctx, query, args...)
 	return e.WrapIfErr(err, "failed to save user")
@@ -60,13 +59,23 @@ func (r *userRepo) GetByID(ctx context.Context, userID string) (domain.User, err
 	return user.ToDomain(), e.WrapIfErr(err, "failed to get user")
 }
 
-func (r *userRepo) Update(ctx context.Context, user domain.User) error {
-	m := map[string]any{}
-	if user.Email != "" {
-		m["email"] = user.Email
+func (r *userRepo) GetByTelegramID(ctx context.Context, telegramID int64) (domain.User, error) {
+	query, args := r.qb.Select("*").From("users").Where(sq.Eq{"telegram_id": telegramID}).MustSql()
+	var user User
+	err := r.getContext(ctx, &user, query, args...)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.User{}, domain.ErrUserNotFound
 	}
-	if user.TelegramID != 0 {
-		m["telegram_id"] = user.TelegramID
+	return user.ToDomain(), e.WrapIfErr(err, "failed to get user")
+}
+
+func (r *userRepo) Update(ctx context.Context, user domain.User) error {
+	m := map[string]any{"email": user.Email, "telegram_id": user.TelegramID}
+	if user.Email == "" {
+		m["email"] = nil
+	}
+	if user.TelegramID == 0 {
+		m["telegram_id"] = nil
 	}
 	query, args := r.qb.Update("users").SetMap(m).Where(sq.Eq{"user_id": user.ID}).MustSql()
 	_, err := r.execContext(ctx, query, args...)

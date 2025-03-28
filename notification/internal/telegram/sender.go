@@ -25,6 +25,9 @@ func (s *sender) SendLoginNotification(telegramID int64, data domain.LoginNotifi
 	if errors.Is(err, tele.ErrBlockedByUser) {
 		return nil
 	}
+	if errors.Is(err, tele.ErrChatNotFound) {
+		return nil
+	}
 	return err
 }
 

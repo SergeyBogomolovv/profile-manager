@@ -11,18 +11,18 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type Service interface {
+type NotifyService interface {
 	SendLoginNotification(ctx context.Context, data events.UserLogin) error
 	HandleRegister(ctx context.Context, data events.UserRegister) error
 }
 
 type broker struct {
-	svc    Service
+	svc    NotifyService
 	logger *slog.Logger
 	ch     *amqp.Channel
 }
 
-func MustNew(logger *slog.Logger, conn *amqp.Connection, svc Service) *broker {
+func MustNew(logger *slog.Logger, conn *amqp.Connection, svc NotifyService) *broker {
 	ch, err := conn.Channel()
 	if err != nil {
 		log.Fatalf("failed to open a channel: %v", err)

@@ -10,44 +10,40 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type TokenRepo interface {
-	Create(ctx context.Context, userID string) (string, error)
-	CheckUserID(ctx context.Context, token string) (string, error)
-	Revoke(ctx context.Context, token string) error
-}
-
 type Sender interface {
 	SendLoginNotification(telegramID int64, data domain.LoginNotification) error
 }
 
-type UserRepo interface {
+type NotifyUserRepo interface {
 	Save(ctx context.Context, user domain.User) error
 	IsExists(ctx context.Context, userID string) (bool, error)
 	GetByID(ctx context.Context, userID string) (domain.User, error)
+	GetByTelegramID(ctx context.Context, telegramID int64) (domain.User, error)
 	Update(ctx context.Context, user domain.User) error
 }
 
-type SubscriptionRepo interface {
+type NotifySubsRepo interface {
 	SubscriptionsByUser(ctx context.Context, userID string) ([]domain.Subscription, error)
 	Save(ctx context.Context, userID string, subType domain.SubscriptionType) error
 	IsExists(ctx context.Context, userID string, subType domain.SubscriptionType) (bool, error)
+	Update(ctx context.Context, userID string, subType domain.SubscriptionType, enabled bool) error
+	Delete(ctx context.Context, userID string, subType domain.SubscriptionType) error
 }
 
 type service struct {
-	txManager     transaction.TxManager
-	mailer        mailer.Mailer
-	users         UserRepo
-	sender        Sender
-	tokens        TokenRepo
-	subscriptions SubscriptionRepo
+	txManager transaction.TxManager
+	mailer    mailer.Mailer
+	users     NotifyUserRepo
+	sender    Sender
+	subs      NotifySubsRepo
 }
 
-func New(txManager transaction.TxManager, mailer mailer.Mailer, sender Sender, users UserRepo, tokens TokenRepo, subscriptions SubscriptionRepo) *service {
-	return &service{mailer: mailer, users: users, txManager: txManager, sender: sender, tokens: tokens, subscriptions: subscriptions}
+func NewNotifyService(txManager transaction.TxManager, mailer mailer.Mailer, sender Sender, users NotifyUserRepo, subs NotifySubsRepo) *service {
+	return &service{mailer: mailer, users: users, txManager: txManager, sender: sender, subs: subs}
 }
 
 func (s *service) SendLoginNotification(ctx context.Context, data events.UserLogin) error {
-	subscriptions, err := s.subscriptions.SubscriptionsByUser(ctx, data.ID)
+	subscriptions, err := s.subs.SubscriptionsByUser(ctx, data.ID)
 	if err != nil {
 		return err
 	}
@@ -77,47 +73,9 @@ func (s *service) HandleRegister(ctx context.Context, data events.UserRegister) 
 		if err := s.users.Save(ctx, domain.User{ID: data.ID, Email: data.Email}); err != nil {
 			return err
 		}
-		if err := s.subscriptions.Save(ctx, data.ID, domain.SubscriptionTypeEmail); err != nil {
+		if err := s.subs.Save(ctx, data.ID, domain.SubscriptionTypeEmail); err != nil {
 			return err
 		}
 		return s.mailer.SendRegisterEmail(data.Email)
 	})
-}
-
-func (s *service) VerifyTelegram(ctx context.Context, token string, telegramID int64) error {
-	return s.txManager.Run(ctx, func(ctx context.Context) error {
-		userID, err := s.tokens.CheckUserID(ctx, token)
-		if err != nil {
-			return err
-		}
-		user, err := s.users.GetByID(ctx, userID)
-		if err != nil {
-			return err
-		}
-		user.TelegramID = telegramID
-		if err := s.users.Update(ctx, user); err != nil {
-			return err
-		}
-		subExists, err := s.subscriptions.IsExists(ctx, userID, domain.SubscriptionTypeTelegram)
-		if err != nil {
-			return err
-		}
-		if !subExists {
-			if err := s.subscriptions.Save(ctx, userID, domain.SubscriptionTypeTelegram); err != nil {
-				return err
-			}
-		}
-		return s.tokens.Revoke(ctx, token)
-	})
-}
-
-func (s *service) GenerateToken(ctx context.Context, userID string) (string, error) {
-	isExists, err := s.users.IsExists(ctx, userID)
-	if err != nil {
-		return "", err
-	}
-	if !isExists {
-		return "", domain.ErrUserNotFound
-	}
-	return s.tokens.Create(ctx, userID)
 }
