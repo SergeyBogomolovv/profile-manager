@@ -5,8 +5,8 @@ gen-proto:
 		--go-grpc_out=common/api/$(name) --go-grpc_opt=paths=source_relative \
 		common/api/$(name)/$(name).proto
 
-run-sso:
-	@go run sso/cmd/main.go
+dev:
+	@docker compose -f compose.dev.yml up -d
 
-run-profile:
-	@go run profile/cmd/main.go
+stop-dev:
+	@docker compose -f compose.dev.yml down
