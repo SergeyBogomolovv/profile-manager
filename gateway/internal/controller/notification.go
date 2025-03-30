@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"log/slog"
 	"net/http"
 
 	pb "github.com/SergeyBogomolovv/profile-manager/common/api/notification"
@@ -11,13 +12,15 @@ import (
 )
 
 type notiController struct {
+	logger *slog.Logger
 	client pb.NotificationClient
 }
 
-func NewNotificationController(client pb.NotificationClient) *notiController {
-	return &notiController{client: client}
+func NewNotificationController(logger *slog.Logger, client pb.NotificationClient) *notiController {
+	return &notiController{logger: logger, client: client}
 }
 
+// Init initializes notification routes.
 func (c *notiController) Init(r *chi.Mux) {
 	r.Route("/notification", func(r chi.Router) {
 		r.Post("/token", c.HandleToken)

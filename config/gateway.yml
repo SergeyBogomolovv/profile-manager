@@ -1,0 +1,4 @@
+http_port: 8081
+sso_addr: localhost:50051
+profile_addr: localhost:50052
+notification_addr: localhost:50053
