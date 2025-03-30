@@ -10,3 +10,9 @@ dev:
 
 stop-dev:
 	@docker compose -f compose.dev.yml down
+
+start:
+	@docker compose -f compose.yml up -d
+
+stop:
+	@docker compose -f compose.yml down
