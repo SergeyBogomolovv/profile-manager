@@ -1,0 +1,293 @@
+definitions:
+  httpx.ErrorResponse:
+    properties:
+      code:
+        example: 400
+        type: integer
+      reason:
+        example: Некорректный запрос
+        type: string
+    type: object
+  httpx.SuccessResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      message:
+        example: Запрос выполнен успешно
+        type: string
+    type: object
+  internal_controller.AccessTokenResponse:
+    properties:
+      access_token:
+        example: access_token
+        type: string
+    type: object
+  internal_controller.LoginRequest:
+    properties:
+      email:
+        example: xLb3u@example.com
+        type: string
+      password:
+        example: password
+        minLength: 6
+        type: string
+    type: object
+  internal_controller.ProfileResponse:
+    properties:
+      avatar:
+        example: avatar
+        type: string
+      birth_date:
+        example: birth_date
+        type: string
+      first_name:
+        example: first_name
+        type: string
+      gender:
+        example: gender
+        type: string
+      last_name:
+        example: last_name
+        type: string
+      user_id:
+        example: user_id
+        type: string
+      username:
+        example: username
+        type: string
+    type: object
+  internal_controller.RegisterRequest:
+    properties:
+      email:
+        example: xLb3u@example.com
+        type: string
+      password:
+        example: password
+        minLength: 6
+        type: string
+    type: object
+  internal_controller.RegisterResponse:
+    properties:
+      message:
+        example: user registered successfully
+        type: string
+      user_id:
+        example: user_id
+        type: string
+    type: object
+  internal_controller.TokenResponse:
+    properties:
+      token:
+        example: sf34fdsfsdf-sdf3ef
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user with email and password and returns an access
+        token.
+      parameters:
+      - description: User login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_controller.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful login, returns access token
+          schema:
+            $ref: '#/definitions/internal_controller.AccessTokenResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      summary: User login
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Logs out the user by invalidating the refresh token stored in cookies.
+      parameters:
+      - description: Refresh token stored in cookie (refresh_token=<token>)
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User logged out successfully
+          schema:
+            $ref: '#/definitions/httpx.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      summary: User logout
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refreshes the user's access token using the refresh token stored
+        in cookies.
+      parameters:
+      - description: Refresh token stored in cookie (refresh_token=<token>)
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: New access token generated successfully
+          schema:
+            $ref: '#/definitions/internal_controller.AccessTokenResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      summary: Refresh access token
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Registers a new user using email and password and returns the created
+        user ID.
+      parameters:
+      - description: User registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_controller.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User registered successfully, returns user ID
+          schema:
+            $ref: '#/definitions/internal_controller.RegisterResponse'
+        "400":
+          description: Invalid data or bad request
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "409":
+          description: User with this email already exists
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      summary: User registration
+      tags:
+      - auth
+  /notification/token:
+    post:
+      consumes:
+      - application/json
+      description: Generates a token for Telegram notifications
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_controller.TokenResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Generate Telegram token
+      tags:
+      - notification
+  /profile/my:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the profile of the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_controller.ProfileResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user profile
+      tags:
+      - profile
+  /profile/update:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Updates the authenticated user's profile information using multipart/form-data.
+      parameters:
+      - description: Username
+        in: formData
+        name: username
+        type: string
+      - description: First name
+        in: formData
+        name: first_name
+        type: string
+      - description: Last name
+        in: formData
+        name: last_name
+        type: string
+      - description: Birth date (YYYY-MM-DD)
+        in: formData
+        name: birth_date
+        type: string
+      - description: Gender (male or female)
+        in: formData
+        name: gender
+        type: string
+      - description: Profile avatar
+        in: formData
+        name: avatar
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Profile updated successfully
+          schema:
+            $ref: '#/definitions/internal_controller.ProfileResponse'
+        "400":
+          description: Validation error or bad request
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user profile
+      tags:
+      - profile
+swagger: "2.0"
